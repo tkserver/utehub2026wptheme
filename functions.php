@@ -42,6 +42,8 @@ add_action( 'customize_register', 'utehub2026_customize_register' );
 function utehub2026_enqueue_assets() {
     $style_path    = get_stylesheet_directory() . '/style.css';
     $style_version = file_exists( $style_path ) ? (string) filemtime( $style_path ) : wp_get_theme()->get( 'Version' );
+    $script_path   = get_stylesheet_directory() . '/assets/nav.js';
+    $script_version = file_exists( $script_path ) ? (string) filemtime( $script_path ) : $style_version;
 
     wp_enqueue_style(
         'utehub2026-fonts',
@@ -51,6 +53,14 @@ function utehub2026_enqueue_assets() {
     );
 
     wp_enqueue_style( 'utehub2026-style', get_stylesheet_uri(), array( 'utehub2026-fonts' ), $style_version );
+
+    wp_enqueue_script(
+        'utehub2026-nav',
+        get_template_directory_uri() . '/assets/nav.js',
+        array(),
+        $script_version,
+        true
+    );
 }
 add_action( 'wp_enqueue_scripts', 'utehub2026_enqueue_assets' );
 
@@ -592,6 +602,12 @@ function utehub2026_render_nav_item( $item, $depth = 0 ) {
 
     echo '</a>';
 
+    if ( 0 === $depth && $has_children ) {
+        echo '<button class="submenu-toggle" type="button" aria-expanded="false" aria-label="' . esc_attr( sprintf( __( 'Toggle %s submenu', 'utehub2026' ), $item['label'] ) ) . '">';
+        echo utehub2026_get_svg( 'chevron' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo '</button>';
+    }
+
     if ( $has_children ) {
         echo '<ul class="sub-menu">';
         foreach ( $item['children'] as $child ) {
@@ -608,7 +624,11 @@ function utehub2026_render_primary_nav() {
 
     echo '<nav class="nav" aria-label="Primary">';
     echo '<a class="brand" href="' . esc_url( home_url( '/' ) ) . '"><img src="' . esc_url( utehub2026_get_brand_url() ) . '" alt="' . esc_attr( get_bloginfo( 'name' ) ) . '"></a>';
-    echo '<ul class="links">';
+    echo '<button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-menu">';
+    echo '<span class="screen-reader-text">' . esc_html__( 'Toggle navigation', 'utehub2026' ) . '</span>';
+    echo '<span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span><span></span></span>';
+    echo '</button>';
+    echo '<ul class="links" id="primary-menu">';
 
     foreach ( $items as $item ) {
         utehub2026_render_nav_item( $item );
@@ -1288,6 +1308,7 @@ function utehub2026_render_topics_feed( $base_url = '' ) {
                             $voice_count    = function_exists( 'bbp_get_topic_voice_count' ) ? (int) bbp_get_topic_voice_count( $topic_id ) : 0;
                             $last_active_id = function_exists( 'bbp_get_topic_last_active_id' ) ? (int) bbp_get_topic_last_active_id( $topic_id ) : $topic_id;
                             $last_author_id = (int) get_post_field( 'post_author', $last_active_id ? $last_active_id : $topic_id );
+                            $started_by_id  = (int) get_post_field( 'post_author', $topic_id );
                             $heat           = utehub2026_get_topic_heat( max( 0, $reply_count - 1 ) );
                             $classes        = 'uh-topic';
 
@@ -1309,7 +1330,10 @@ function utehub2026_render_topics_feed( $base_url = '' ) {
                                         <?php endif; ?>
                                     </div>
                                     <a class="t-title" href="<?php echo esc_url( get_permalink( $topic_id ) ); ?>"><?php echo esc_html( get_the_title( $topic_id ) ); ?></a>
-                                    <div class="t-by">Started by <a href="<?php echo esc_url( function_exists( 'bbp_get_topic_author_url' ) ? bbp_get_topic_author_url( $topic_id ) : get_author_posts_url( (int) get_post_field( 'post_author', $topic_id ) ) ); ?>"><?php echo esc_html( function_exists( 'bbp_get_topic_author_display_name' ) ? bbp_get_topic_author_display_name( $topic_id ) : get_the_author_meta( 'display_name', (int) get_post_field( 'post_author', $topic_id ) ) ); ?></a></div>
+                                    <div class="t-by">
+                                        <?php echo utehub2026_render_avatar( $started_by_id, 20, array( 'class' => 't-by-av', 'name' => get_the_author_meta( 'display_name', $started_by_id ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                                        Started by <a href="<?php echo esc_url( function_exists( 'bbp_get_topic_author_url' ) ? bbp_get_topic_author_url( $topic_id ) : get_author_posts_url( (int) get_post_field( 'post_author', $topic_id ) ) ); ?>"><?php echo esc_html( function_exists( 'bbp_get_topic_author_display_name' ) ? bbp_get_topic_author_display_name( $topic_id ) : get_the_author_meta( 'display_name', (int) get_post_field( 'post_author', $topic_id ) ) ); ?></a>
+                                    </div>
                                 </div>
 
                                 <div class="t-stats">

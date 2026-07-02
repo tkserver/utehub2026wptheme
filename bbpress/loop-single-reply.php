@@ -36,19 +36,21 @@ if ( $depth > 0 ) {
         </div>
         <div class="pauthor">
             <?php echo utehub2026_render_avatar( $author_id, 84, array( 'name' => bbp_get_reply_author_display_name( $reply_id ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-            <div class="name"><?php bbp_reply_author_display_name( $reply_id ); ?></div>
-            <div class="rank"><?php bbp_reply_author_role( array( 'reply_id' => $reply_id ) ); ?></div>
-            <?php if ( current_user_can( 'moderate', $reply_id ) ) : ?>
-                <div class="ip"><?php bbp_author_ip( $reply_id ); ?></div>
-            <?php endif; ?>
-            <a class="ignore" href="#">Ignore user</a>
+            <div class="pauthor-meta">
+                <div class="name"><?php bbp_reply_author_display_name( $reply_id ); ?></div>
+                <div class="rank"><?php bbp_reply_author_role( array( 'reply_id' => $reply_id ) ); ?></div>
+                <?php if ( current_user_can( 'moderate', $reply_id ) ) : ?>
+                    <div class="ip"><?php bbp_author_ip( $reply_id ); ?></div>
+                <?php endif; ?>
+                <a class="ignore" href="#">Ignore user</a>
+            </div>
         </div>
         <div class="pbody">
             <?php if ( $parent_author ) : ?>
                 <div class="replyto"><?php echo utehub2026_get_svg( 'reply' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>In reply to <a href="#reply-<?php echo esc_attr( $reply_id ); ?>"><?php echo esc_html( $parent_author ); ?></a></div>
             <?php endif; ?>
             <?php bbp_reply_content(); ?>
-            <a class="reply-link" href="#new-reply-<?php echo esc_attr( bbp_get_topic_id() ); ?>"><?php echo utehub2026_get_svg( 'reply' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>Reply</a>
+            <a class="reply-link" href="#new-reply-<?php echo esc_attr( bbp_get_topic_id() ); ?>"<?php echo is_user_logged_in() ? '' : ' data-login-required="1"'; ?>><?php echo utehub2026_get_svg( 'reply' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>Reply</a>
         </div>
     </article>
 </div>

@@ -40,9 +40,10 @@ if ( bbp_is_topic_sticky( $topic_id ) || bbp_is_topic_super_sticky( $topic_id ) 
             <?php endif; ?>
         </div>
 
-        <a class="t-title" href="<?php echo esc_url( bbp_get_topic_permalink( $topic_id ) ); ?>"><?php echo esc_html( bbp_get_topic_title( $topic_id ) ); ?></a>
+        <a class="t-title" href="<?php echo esc_url( bbp_get_topic_permalink( $topic_id ) ); ?>"><?php bbp_topic_title( $topic_id ); ?></a>
 
         <div class="t-by">
+            <?php echo utehub2026_render_avatar( $started_by_id, 20, array( 'class' => 't-by-av', 'name' => bbp_get_topic_author_display_name( $topic_id ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
             Started by
             <a href="<?php echo esc_url( bbp_get_topic_author_url( $topic_id ) ); ?>"><?php echo esc_html( bbp_get_topic_author_display_name( $topic_id ) ); ?></a>
         </div>

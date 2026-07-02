@@ -129,6 +129,40 @@ a:hover {
   flex: 1 1 auto;
 }
 
+.nav-toggle,
+.submenu-toggle {
+  display: none;
+  border: 0;
+  background: transparent;
+  color: #f5f5f7;
+  padding: 0;
+  cursor: pointer;
+}
+
+.nav-toggle {
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  margin-left: auto;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.nav-toggle-bars {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.nav-toggle-bars span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
 .links > .menu-item {
   display: block;
 }
@@ -467,7 +501,7 @@ a:hover {
 .uh-topic {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) 110px 210px;
   gap: 24px;
   align-items: center;
   min-width: 0;
@@ -571,9 +605,18 @@ a:hover {
 }
 
 .t-by {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   margin-top: 7px;
   color: var(--meta);
   font-size: 13.5px;
+}
+
+.av.t-by-av {
+  flex-shrink: 0;
+  border-radius: 6px;
+  font-size: 9px;
 }
 
 .t-pages {
@@ -1190,6 +1233,14 @@ a:hover {
   padding: 22px 18px;
   text-align: center;
   border-right: 1px solid var(--line);
+}
+
+.pauthor-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
 }
 
 .pauthor .av {
@@ -2744,15 +2795,27 @@ a:hover {
   .nav {
     height: auto;
     flex-wrap: wrap;
-    gap: 16px;
-    padding: 16px 20px;
+    gap: 12px;
+    padding: 14px 18px;
+  }
+
+  .nav-toggle {
+    display: inline-flex;
   }
 
   .links {
+    display: none;
     width: 100%;
+    flex-direction: column;
     justify-content: flex-start;
-    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 8px;
     margin-left: 0;
+    padding: 10px 0 2px;
+  }
+
+  .nav.is-open .links {
+    display: flex;
   }
 
   .menu-item {
@@ -2761,32 +2824,105 @@ a:hover {
 
   .nav-link {
     width: 100%;
+    min-height: 52px;
     justify-content: space-between;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.03);
   }
 
-  .sub-menu {
+  .submenu-indicator {
+    display: none;
+  }
+
+  .submenu-toggle {
+    display: inline-flex;
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    color: #d8d8df;
+  }
+
+  .submenu-toggle svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.18s ease;
+  }
+
+  .menu-item.is-submenu-open > .submenu-toggle svg {
+    transform: rotate(180deg);
+  }
+
+  .nav .sub-menu {
     position: static;
     min-width: 0;
     margin-top: 8px;
-    margin-left: 12px;
+    margin-left: 0;
+    padding: 8px;
     transform: none;
     display: none;
     box-shadow: none;
+    border-color: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.03);
   }
 
   .nav .menu-item:hover > .sub-menu,
   .nav .menu-item:focus-within > .sub-menu {
+    display: none;
+  }
+
+  .nav .menu-item.is-submenu-open > .sub-menu {
     display: flex;
   }
 
   .page-wrap,
   .uh-wrap {
-    padding: 20px;
+    padding: 18px 14px 28px;
   }
 
   .feedhead {
     align-items: stretch;
     flex-direction: column;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .feedhead h1,
+  .thread-head h1 {
+    font-size: 30px;
+  }
+
+  .eye {
+    font-size: 10px;
+    letter-spacing: 2px;
+  }
+
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-right: -2px;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: 8px 12px;
+    font-size: 11px;
+    letter-spacing: 0.6px;
+  }
+
+  .topics {
+    gap: 10px;
   }
 
   .activity-tabs ul {
@@ -2886,13 +3022,103 @@ a:hover {
     padding: 18px;
   }
 
+  .crumb {
+    margin-bottom: 8px;
+  }
+
+  .forum-crumb .bbp-breadcrumb p {
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  .forum-page-head {
+    margin-bottom: 10px;
+  }
+
+  .forums-head-tools {
+    width: 100%;
+    gap: 10px;
+    justify-items: stretch;
+  }
+
+  .forums-subscribe {
+    min-height: 0;
+    font-size: 11px;
+    letter-spacing: 0.8px;
+  }
+
+  .forum-page .search {
+    height: 40px;
+    padding: 0 10px;
+  }
+
+  .forum-page .search svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .forum-page .search input {
+    font-size: 13px;
+  }
+
   .forum-page-summary {
+    gap: 14px;
+    margin-bottom: 14px;
+    padding: 14px 16px;
     flex-direction: column;
+  }
+
+  .forum-page-description {
+    font-size: 14px;
+    line-height: 1.5;
   }
 
   .forum-page-stats {
     width: 100%;
     justify-content: flex-start;
+    gap: 18px;
+  }
+
+  .forum-page-stats .forum-stat strong {
+    font-size: 26px;
+  }
+
+  .forum-page-stats .forum-stat span {
+    font-size: 10px;
+    letter-spacing: 0.8px;
+  }
+
+  .forum-page-subforums {
+    gap: 6px;
+    margin-bottom: 14px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .forum-page-subforums::-webkit-scrollbar {
+    display: none;
+  }
+
+  .forum-pill {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .forum-pill small {
+    font-size: 10px;
+  }
+
+  .forum-topic-list {
+    margin-top: 2px;
+  }
+
+  .viewing {
+    margin-bottom: 8px;
+    font-size: 10px;
+    line-height: 1.4;
   }
 
   .forum-card-main h3 {
@@ -2910,11 +3136,157 @@ a:hover {
 
   .uh-topic {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 14px;
+    padding: 14px 14px 15px 16px;
+  }
+
+  .forum-page .uh-topic {
+    gap: 12px;
+    padding: 12px 12px 13px 14px;
+  }
+
+  .forum-page .t-title {
+    font-size: 15px;
+    line-height: 1.15;
+  }
+
+  .forum-page .t-by {
+    font-size: 10px;
+  }
+
+  .forum-page .t-stats {
+    gap: 12px;
+  }
+
+  .forum-page .stat b {
+    font-size: 17px;
+  }
+
+  .forum-page .stat span {
+    font-size: 7px;
+  }
+
+  .t-tags {
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .chip {
+    padding: 2px 7px;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+  }
+
+  .t-title {
+    font-size: 17px;
+    line-height: 1.12;
+  }
+
+  .t-by {
+    margin-top: 6px;
+    font-size: 11px;
+  }
+
+  .t-stats {
+    gap: 14px;
+    justify-content: flex-start;
+    padding-top: 2px;
+  }
+
+  .stat {
+    min-width: 34px;
+    text-align: left;
+  }
+
+  .stat b {
+    font-size: 19px;
+  }
+
+  .stat span {
+    font-size: 8px;
+    letter-spacing: 0.8px;
   }
 
   .t-last {
     min-width: 0;
+    gap: 9px;
+    align-items: center;
+  }
+
+  .t-last img.avatar,
+  .t-last .avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .lp .who {
+    font-size: 11px;
+  }
+
+  .lp .when {
+    font-size: 10px;
+  }
+
+  .pager,
+  .uh-pager {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    margin: 14px 0;
+  }
+
+  .count,
+  .uh-count {
+    font-size: 11px;
+  }
+
+  .pages,
+  .uh-pages {
+    gap: 5px;
+  }
+
+  .pg,
+  .uh-pages .page-numbers {
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0 9px;
+    font-size: 12px;
+  }
+
+  .bbp-reply-form {
+    margin-top: 14px;
+    padding: 14px;
+  }
+
+  .bbp-reply-form legend {
+    margin-bottom: 10px;
+    font-size: 17px;
+    line-height: 1.25;
+  }
+
+  .bbp-reply-form p {
+    margin: 10px 0;
+  }
+
+  .bbp-reply-form textarea {
+    min-height: 140px;
+  }
+
+  .bbp-submit-wrapper {
+    margin-top: 12px;
+  }
+
+  #bbp_reply_submit,
+  #bbp_topic_submit,
+  .button.submit {
+    width: 100%;
+    min-height: 42px;
+    padding: 11px 18px;
+    font-size: 13px;
+  }
+
+  .forum-page .rail {
+    display: none;
   }
 
   .thread-meta .mcat,
@@ -2922,13 +3294,176 @@ a:hover {
     margin-left: 0;
   }
 
+  .crumb {
+    gap: 5px;
+    margin-bottom: 10px;
+    font-size: 10px;
+    line-height: 1.45;
+  }
+
+  .thread-head {
+    margin-bottom: 16px;
+  }
+
+  .thread-meta {
+    gap: 10px 14px;
+    font-size: 11px;
+  }
+
+  .thread-meta .m {
+    gap: 5px;
+  }
+
+  .thread-meta .m svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .thread-meta .m b {
+    font-size: 13px;
+  }
+
+  .viewing {
+    margin: 12px 0 10px;
+    font-size: 10px;
+  }
+
   .post {
     grid-template-columns: 1fr;
   }
 
+  .post-top {
+    gap: 10px;
+    padding: 9px 12px;
+  }
+
+  .ts {
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 10px;
+  }
+
+  .vote {
+    gap: 6px;
+  }
+
+  .vb {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .vb svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .post-mod {
+    font-size: 9px;
+    line-height: 1.45;
+  }
+
+  .post-mod a,
+  .post-mod span.sep {
+    padding: 0 6px 0 0;
+  }
+
+  .post-num {
+    font-size: 10px;
+  }
+
   .pauthor {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    align-items: start;
+    column-gap: 12px;
+    row-gap: 3px;
+    padding: 12px;
+    text-align: left;
     border-right: 0;
     border-bottom: 1px solid var(--line);
+  }
+
+  .pauthor .av {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+    width: 56px;
+    height: 56px;
+    margin-bottom: 0;
+    border-radius: 11px;
+    font-size: 22px;
+  }
+
+  .pauthor-meta {
+    grid-column: 2;
+    grid-row: 1;
+    align-items: flex-start;
+    text-align: left;
+    width: 100%;
+    margin-left: 30px;
+    min-width: 0;
+  }
+
+  .pauthor .name {
+    display: block;
+    width: 100%;
+    font-size: 15px;
+    line-height: 1.15;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .rank {
+    display: block;
+    width: 100%;
+    font-size: 10px;
+    line-height: 1.25;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .ip {
+    display: block;
+    width: 100%;
+    font-size: 10px;
+    line-height: 1.25;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .ignore {
+    display: block;
+    width: 100%;
+    margin-top: 2px;
+    font-size: 10px;
+    line-height: 1.2;
+    min-width: 0;
+  }
+
+  .pbody {
+    padding: 14px 14px 16px;
+  }
+
+  .pbody p {
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .replyto {
+    margin-bottom: 10px;
+    padding: 3px 9px 3px 8px;
+    font-size: 10px;
+  }
+
+  .replyto svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  .reply-link {
+    margin-top: 10px;
+    font-size: 11px;
   }
 
   .post-top {
@@ -2941,6 +3476,10 @@ a:hover {
   .post-wrap.nest-3,
   .post-wrap.nest-4 {
     margin-left: 9px;
+  }
+
+  .posts {
+    gap: 10px;
   }
 
   .footer-wrap {
