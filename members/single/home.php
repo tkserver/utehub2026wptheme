@@ -15,7 +15,7 @@ get_header();
         <div id="buddypress" class="member-single-shell">
             <?php do_action( 'bp_before_member_home_content' ); ?>
 
-            <div id="item-header" role="complementary">
+            <div id="item-header" class="<?php echo bp_displayed_user_use_cover_image_header() ? 'has-cover-image' : 'has-member-avatar'; ?>" role="complementary">
                 <?php
                 if ( bp_displayed_user_use_cover_image_header() ) :
                     bp_get_template_part( 'members/single/cover-image-header' );

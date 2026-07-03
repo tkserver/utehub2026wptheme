@@ -83,6 +83,28 @@ function utehub2026_enqueue_assets() {
             )
         );
     }
+
+    if ( function_exists( 'bp_is_activity_directory' ) && bp_is_activity_directory() ) {
+        $activity_script_path    = get_stylesheet_directory() . '/assets/activity-directory.js';
+        $activity_script_version = file_exists( $activity_script_path ) ? (string) filemtime( $activity_script_path ) : $script_version;
+
+        wp_enqueue_script(
+            'utehub2026-activity-directory',
+            get_template_directory_uri() . '/assets/activity-directory.js',
+            array(),
+            $activity_script_version,
+            true
+        );
+
+        wp_localize_script(
+            'utehub2026-activity-directory',
+            'UteHubActivityDirectory',
+            array(
+                'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
+                'activityUrl' => function_exists( 'bp_get_activity_directory_permalink' ) ? bp_get_activity_directory_permalink() : home_url( '/activity/' ),
+            )
+        );
+    }
 }
 add_action( 'wp_enqueue_scripts', 'utehub2026_enqueue_assets' );
 
@@ -134,6 +156,72 @@ function utehub2026_members_ajax_template_loader() {
 }
 add_action( 'wp_ajax_members_filter', 'utehub2026_members_ajax_template_loader' );
 add_action( 'wp_ajax_nopriv_members_filter', 'utehub2026_members_ajax_template_loader' );
+
+function utehub2026_activity_ajax_querystring( $query_string, $object ) {
+    if ( 'activity' !== $object || ! bp_is_post_request() || empty( $_POST['action'] ) || 'activity_widget_filter' !== $_POST['action'] ) {
+        return $query_string;
+    }
+
+    $filter       = isset( $_POST['filter'] ) ? sanitize_key( wp_unslash( $_POST['filter'] ) ) : '-1';
+    $scope        = isset( $_POST['scope'] ) ? sanitize_key( wp_unslash( $_POST['scope'] ) ) : 'all';
+    $search_terms = isset( $_POST['search_terms'] ) ? sanitize_text_field( wp_unslash( $_POST['search_terms'] ) ) : '';
+    $query_args   = array(
+        'page' => 1,
+    );
+
+    if ( '' !== $filter && '-1' !== $filter ) {
+        $query_args['type']   = $filter;
+        $query_args['action'] = $filter;
+    }
+
+    if ( 'all' !== $scope ) {
+        $query_args['scope'] = $scope;
+    }
+
+    if ( '' !== $search_terms ) {
+        $query_args['search_terms'] = $search_terms;
+    }
+
+    return build_query( $query_args );
+}
+
+function utehub2026_get_activity_ajax_feed_url( $scope ) {
+    switch ( $scope ) {
+        case 'friends':
+            return is_user_logged_in() ? bp_loggedin_user_url( bp_members_get_path_chunks( array( bp_get_activity_slug(), bp_get_friends_slug(), array( 'feed' ) ) ) ) : bp_get_sitewide_activity_feed_link();
+        case 'groups':
+            return is_user_logged_in() ? bp_loggedin_user_url( bp_members_get_path_chunks( array( bp_get_activity_slug(), bp_get_groups_slug(), array( 'feed' ) ) ) ) : bp_get_sitewide_activity_feed_link();
+        case 'favorites':
+            return is_user_logged_in() ? bp_loggedin_user_url( bp_members_get_path_chunks( array( bp_get_activity_slug(), 'favorites', array( 'feed' ) ) ) ) : bp_get_sitewide_activity_feed_link();
+        case 'mentions':
+            return is_user_logged_in() ? bp_loggedin_user_url( bp_members_get_path_chunks( array( bp_get_activity_slug(), 'mentions', array( 'feed' ) ) ) ) : bp_get_sitewide_activity_feed_link();
+        default:
+            return bp_get_sitewide_activity_feed_link();
+    }
+}
+
+function utehub2026_activity_ajax_template_loader() {
+    if ( ! bp_is_post_request() || ! function_exists( 'bp_is_active' ) || ! bp_is_active( 'activity' ) ) {
+        wp_send_json_error();
+    }
+
+    $scope = isset( $_POST['scope'] ) ? sanitize_key( wp_unslash( $_POST['scope'] ) ) : 'all';
+
+    add_filter( 'bp_ajax_querystring', 'utehub2026_activity_ajax_querystring', 20, 2 );
+
+    ob_start();
+    bp_get_template_part( 'activity/activity-loop' );
+    $contents = ob_get_clean();
+
+    wp_send_json(
+        array(
+            'contents' => $contents,
+            'feed_url' => utehub2026_get_activity_ajax_feed_url( $scope ),
+        )
+    );
+}
+add_action( 'wp_ajax_activity_widget_filter', 'utehub2026_activity_ajax_template_loader', 20 );
+add_action( 'wp_ajax_nopriv_activity_widget_filter', 'utehub2026_activity_ajax_template_loader', 20 );
 
 function utehub2026_customize_register( $wp_customize ) {
     $wp_customize->add_section(

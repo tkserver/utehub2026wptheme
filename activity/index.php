@@ -12,9 +12,14 @@ get_header();
 do_action( 'bp_before_directory_activity' );
 ?>
 
-<div class="page-wrap activity-page-wrap">
+<div class="uh-wrap activity-page-wrap">
     <section class="activity-page-shell">
-        <div id="buddypress" class="activity-directory-shell">
+        <div
+            id="buddypress"
+            class="activity-directory-shell"
+            data-ajax-url="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
+            data-activity-url="<?php echo esc_url( function_exists( 'bp_get_activity_directory_permalink' ) ? bp_get_activity_directory_permalink() : home_url( '/activity/' ) ); ?>"
+        >
             <?php do_action( 'bp_before_directory_activity_content' ); ?>
 
             <div class="feedhead activity-head">
@@ -23,11 +28,11 @@ do_action( 'bp_before_directory_activity' );
                     <h1><?php esc_html_e( 'Site-Wide Activity', 'utehub2026' ); ?></h1>
                 </div>
 
-                <div id="activity-dir-search" class="search dir-search" role="search">
+                <div id="activity-dir-search" class="search dir-search" role="search" data-bp-search="activity">
                     <?php echo utehub2026_get_svg( 'search' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                     <form action="" method="get" id="search-activity-form">
                         <label for="activity_search" class="screen-reader-text"><?php esc_html_e( 'Search activity', 'utehub2026' ); ?></label>
-                        <input type="text" name="s" id="activity_search" placeholder="<?php esc_attr_e( 'Search activity...', 'utehub2026' ); ?>" />
+                        <input type="search" name="s" id="activity_search" placeholder="<?php esc_attr_e( 'Search activity...', 'utehub2026' ); ?>" />
                         <button type="submit"><?php esc_html_e( 'Search', 'buddypress' ); ?></button>
                     </form>
                 </div>
@@ -38,7 +43,7 @@ do_action( 'bp_before_directory_activity' );
                     <ul>
                         <?php do_action( 'bp_before_activity_type_tab_all' ); ?>
 
-                        <li class="selected" id="activity-all">
+                        <li class="selected" id="activity-all" data-bp-scope="all" data-bp-object="activity">
                             <a href="<?php bp_activity_directory_permalink(); ?>">
                                 <?php
                                 printf(
@@ -53,7 +58,7 @@ do_action( 'bp_before_directory_activity' );
                             <?php do_action( 'bp_before_activity_type_tab_friends' ); ?>
 
                             <?php if ( bp_is_active( 'friends' ) && bp_get_total_friend_count( bp_loggedin_user_id() ) ) : ?>
-                                <li id="activity-friends">
+                                <li id="activity-friends" data-bp-scope="friends" data-bp-object="activity">
                                     <a href="<?php bp_loggedin_user_link( array( bp_get_activity_slug(), bp_get_friends_slug() ) ); ?>">
                                         <?php
                                         printf(
@@ -68,7 +73,7 @@ do_action( 'bp_before_directory_activity' );
                             <?php do_action( 'bp_before_activity_type_tab_groups' ); ?>
 
                             <?php if ( bp_is_active( 'groups' ) && bp_get_total_group_count_for_user( bp_loggedin_user_id() ) ) : ?>
-                                <li id="activity-groups">
+                                <li id="activity-groups" data-bp-scope="groups" data-bp-object="activity">
                                     <a href="<?php bp_loggedin_user_link( array( bp_get_activity_slug(), bp_get_groups_slug() ) ); ?>">
                                         <?php
                                         printf(
@@ -83,7 +88,7 @@ do_action( 'bp_before_directory_activity' );
                             <?php do_action( 'bp_before_activity_type_tab_favorites' ); ?>
 
                             <?php if ( bp_get_total_favorite_count_for_user( bp_loggedin_user_id() ) ) : ?>
-                                <li id="activity-favorites">
+                                <li id="activity-favorites" data-bp-scope="favorites" data-bp-object="activity">
                                     <a href="<?php bp_loggedin_user_link( array( bp_get_activity_slug(), 'favorites' ) ); ?>">
                                         <?php
                                         printf(
@@ -98,7 +103,7 @@ do_action( 'bp_before_directory_activity' );
                             <?php if ( bp_activity_do_mentions() ) : ?>
                                 <?php do_action( 'bp_before_activity_type_tab_mentions' ); ?>
 
-                                <li id="activity-mentions">
+                                <li id="activity-mentions" data-bp-scope="mentions" data-bp-object="activity">
                                     <a href="<?php bp_loggedin_user_link( array( bp_get_activity_slug(), 'mentions' ) ); ?>">
                                         <?php esc_html_e( 'Mentions', 'buddypress' ); ?>
                                         <?php if ( bp_get_total_mention_count_for_user( bp_loggedin_user_id() ) ) : ?>
@@ -132,13 +137,13 @@ do_action( 'bp_before_directory_activity' );
                     </ul>
                 </div>
 
-                <div class="item-list-tabs no-ajax activity-filter-nav" id="subnav" aria-label="<?php esc_attr_e( 'Activity secondary navigation', 'buddypress' ); ?>" role="navigation">
+                <div class="item-list-tabs activity-filter-nav" id="subnav" aria-label="<?php esc_attr_e( 'Activity secondary navigation', 'buddypress' ); ?>" role="navigation">
                     <ul>
                         <?php do_action( 'bp_activity_syndication_options' ); ?>
 
                         <li id="activity-filter-select" class="last">
                             <label for="activity-filter-by"><?php esc_html_e( 'Show', 'utehub2026' ); ?></label>
-                            <select id="activity-filter-by">
+                            <select id="activity-filter-by" data-bp-filter="activity">
                                 <option value="-1"><?php esc_html_e( 'Everything', 'utehub2026' ); ?></option>
                                 <?php bp_activity_show_filters(); ?>
                                 <?php do_action( 'bp_activity_filter_options' ); ?>
@@ -154,7 +159,7 @@ do_action( 'bp_before_directory_activity' );
 
             <?php do_action( 'bp_before_directory_activity_list' ); ?>
 
-            <div class="activity" aria-live="polite" aria-atomic="true" aria-relevant="all">
+            <div class="activity" aria-live="polite" aria-atomic="true" aria-relevant="all" data-bp-list="activity">
                 <?php bp_get_template_part( 'activity/activity-loop' ); ?>
             </div>
 
@@ -163,6 +168,8 @@ do_action( 'bp_before_directory_activity' );
             <?php do_action( 'bp_after_directory_activity_content' ); ?>
         </div>
     </section>
+
+    <?php utehub2026_render_right_rail( 'archive' ); ?>
 </div>
 
 <?php
