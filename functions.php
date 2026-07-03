@@ -486,6 +486,24 @@ function utehub2026_customize_register( $wp_customize ) {
         )
     );
 
+    $wp_customize->add_setting(
+        'utehub2026_show_member_whats_new',
+        array(
+            'default'           => false,
+            'sanitize_callback' => 'wp_validate_boolean',
+        )
+    );
+
+    $wp_customize->add_control(
+        'utehub2026_show_member_whats_new',
+        array(
+            'label'       => __( 'Show "What\'s New" composer on profiles', 'utehub2026' ),
+            'description' => __( 'Allow members to post activity updates from their profile activity tab.', 'utehub2026' ),
+            'section'     => 'utehub2026_member_profiles',
+            'type'        => 'checkbox',
+        )
+    );
+
     if ( ! function_exists( 'bbp_get_forum_post_type' ) ) {
         return;
     }
@@ -550,6 +568,10 @@ function utehub2026_customize_register( $wp_customize ) {
 
 function utehub2026_is_member_groups_tab_enabled() {
     return (bool) get_theme_mod( 'utehub2026_show_member_groups_tab', false );
+}
+
+function utehub2026_is_member_whats_new_enabled() {
+    return (bool) get_theme_mod( 'utehub2026_show_member_whats_new', false );
 }
 
 function utehub2026_is_favorite_topic_enabled() {

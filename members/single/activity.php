@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
     <?php do_action( 'bp_before_member_activity_post_form' ); ?>
 
     <?php
-    if ( is_user_logged_in() && bp_is_my_profile() && ( ! bp_current_action() || bp_is_current_action( 'just-me' ) ) ) {
+    if ( function_exists( 'utehub2026_is_member_whats_new_enabled' ) && utehub2026_is_member_whats_new_enabled() && is_user_logged_in() && bp_is_my_profile() && ( ! bp_current_action() || bp_is_current_action( 'just-me' ) ) ) {
         bp_get_template_part( 'activity/post-form' );
     }
     ?>
