@@ -39,6 +39,32 @@ function utehub2026_setup() {
 add_action( 'after_setup_theme', 'utehub2026_setup' );
 add_action( 'customize_register', 'utehub2026_customize_register' );
 
+function utehub2026_keep_verbose_page_rules_first( $rules ) {
+    $permalink_structure = (string) get_option( 'permalink_structure' );
+
+    if ( ! str_starts_with( $permalink_structure, '/%postname%' ) ) {
+        return $rules;
+    }
+
+    $page_rules = array();
+    $other_rules = array();
+
+    foreach ( $rules as $regex => $query ) {
+        if ( is_string( $query ) && str_contains( $query, 'pagename=$matches' ) ) {
+            $page_rules[ $regex ] = $query;
+        } else {
+            $other_rules[ $regex ] = $query;
+        }
+    }
+
+    if ( empty( $page_rules ) ) {
+        return $rules;
+    }
+
+    return $page_rules + $other_rules;
+}
+add_filter( 'rewrite_rules_array', 'utehub2026_keep_verbose_page_rules_first', 1000 );
+
 function utehub2026_enqueue_assets() {
     $style_path    = get_stylesheet_directory() . '/style.css';
     $style_version = file_exists( $style_path ) ? (string) filemtime( $style_path ) : wp_get_theme()->get( 'Version' );
@@ -224,6 +250,17 @@ function utehub2026_cover_photo_nav_label( $nav_html ) {
 }
 add_filter( 'bp_get_options_nav_change-cover-image', 'utehub2026_cover_photo_nav_label' );
 
+function utehub2026_hide_member_groups_nav() {
+    if ( utehub2026_is_member_groups_tab_enabled() ) {
+        return;
+    }
+
+    if ( function_exists( 'bp_core_remove_nav_item' ) ) {
+        bp_core_remove_nav_item( 'groups' );
+    }
+}
+add_action( 'bp_setup_nav', 'utehub2026_hide_member_groups_nav', 100 );
+
 function utehub2026_member_screen_template() {
     return 'members/single/home';
 }
@@ -238,6 +275,55 @@ add_filter( 'bp_settings_screen_capabilities', 'utehub2026_member_screen_templat
 add_filter( 'bp_settings_screen_delete_account', 'utehub2026_member_screen_template' );
 add_filter( 'bp_settings_screen_data', 'utehub2026_member_screen_template' );
 add_filter( 'bp_settings_screen_xprofile', 'utehub2026_member_screen_template' );
+
+function utehub2026_notifications_delete_all_for_current_tab() {
+    if ( ! function_exists( 'bp_is_notifications_component' ) || ! bp_is_notifications_component() ) {
+        return;
+    }
+
+    if ( ! bp_is_current_action( 'read' ) && ! bp_is_current_action( 'unread' ) ) {
+        return;
+    }
+
+    $action = isset( $_POST['notification_bulk_action'] ) ? sanitize_key( wp_unslash( $_POST['notification_bulk_action'] ) ) : '';
+
+    if ( 'delete-all' !== $action ) {
+        return;
+    }
+
+    $nonce = isset( $_POST['notifications_bulk_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['notifications_bulk_nonce'] ) ) : '';
+
+    if ( ! wp_verify_nonce( $nonce, 'notifications_bulk_nonce' ) ) {
+        bp_core_add_message( __( 'There was a problem deleting your notifications.', 'buddypress' ), 'error' );
+        return;
+    }
+
+    $user_id = bp_displayed_user_id();
+
+    if ( ! $user_id || ( (int) $user_id !== (int) bp_loggedin_user_id() && ! current_user_can( 'bp_manage' ) ) ) {
+        bp_core_add_message( __( 'You do not have permission to delete these notifications.', 'buddypress' ), 'error' );
+        return;
+    }
+
+    $is_new  = bp_is_current_action( 'unread' ) ? 1 : 0;
+    $deleted = BP_Notifications_Notification::delete(
+        array(
+            'user_id' => $user_id,
+            'is_new'  => $is_new,
+        )
+    );
+
+    if ( false === $deleted ) {
+        bp_core_add_message( __( 'There was a problem deleting your notifications.', 'buddypress' ), 'error' );
+    } else {
+        bp_core_add_message( sprintf( _n( '%s notification deleted.', '%s notifications deleted.', (int) $deleted, 'buddypress' ), number_format_i18n( (int) $deleted ) ) );
+    }
+
+    $redirect = bp_is_current_action( 'unread' ) ? bp_get_notifications_unread_permalink( $user_id ) : bp_get_notifications_read_permalink( $user_id );
+
+    bp_core_redirect( $redirect );
+}
+add_action( 'bp_actions', 'utehub2026_notifications_delete_all_for_current_tab', 9 );
 
 function utehub2026_activity_ajax_querystring( $query_string, $object ) {
     if ( 'activity' !== $object || ! bp_is_post_request() || empty( $_POST['action'] ) || 'activity_widget_filter' !== $_POST['action'] ) {
@@ -373,6 +459,33 @@ function utehub2026_customize_register( $wp_customize ) {
         )
     );
 
+    $wp_customize->add_section(
+        'utehub2026_member_profiles',
+        array(
+            'title'       => __( 'Member Profiles', 'utehub2026' ),
+            'priority'    => 45,
+            'description' => __( 'Toggle BuddyPress profile features shown by the theme.', 'utehub2026' ),
+        )
+    );
+
+    $wp_customize->add_setting(
+        'utehub2026_show_member_groups_tab',
+        array(
+            'default'           => false,
+            'sanitize_callback' => 'wp_validate_boolean',
+        )
+    );
+
+    $wp_customize->add_control(
+        'utehub2026_show_member_groups_tab',
+        array(
+            'label'       => __( 'Show Groups tab on member profiles', 'utehub2026' ),
+            'description' => __( 'Keep the BuddyPress Groups component active for compatibility while hiding the profile tab when groups are not part of the site experience.', 'utehub2026' ),
+            'section'     => 'utehub2026_member_profiles',
+            'type'        => 'checkbox',
+        )
+    );
+
     if ( ! function_exists( 'bbp_get_forum_post_type' ) ) {
         return;
     }
@@ -381,7 +494,7 @@ function utehub2026_customize_register( $wp_customize ) {
         'utehub2026_home_feed',
         array(
             'title'       => __( 'Home Feed', 'utehub2026' ),
-            'priority'    => 45,
+            'priority'    => 46,
             'description' => __( 'Choose which forum pills appear above the homepage topic feed.', 'utehub2026' ),
         )
     );
@@ -412,7 +525,7 @@ function utehub2026_customize_register( $wp_customize ) {
         'utehub2026_forum_features',
         array(
             'title'       => __( 'Forum Features', 'utehub2026' ),
-            'priority'    => 46,
+            'priority'    => 47,
             'description' => __( 'Toggle optional bbPress features shown on topic pages.', 'utehub2026' ),
         )
     );
@@ -433,6 +546,10 @@ function utehub2026_customize_register( $wp_customize ) {
             'type'    => 'checkbox',
         )
     );
+}
+
+function utehub2026_is_member_groups_tab_enabled() {
+    return (bool) get_theme_mod( 'utehub2026_show_member_groups_tab', false );
 }
 
 function utehub2026_is_favorite_topic_enabled() {

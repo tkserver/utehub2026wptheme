@@ -7,11 +7,30 @@
 
 defined( 'ABSPATH' ) || exit;
 
+$cover_image = '';
+
+if ( function_exists( 'bp_attachments_get_attachment' ) ) {
+    $cover_image = bp_attachments_get_attachment(
+        'url',
+        array(
+            'object_dir' => 'members',
+            'item_id'    => bp_displayed_user_id(),
+        )
+    );
+}
+
 do_action( 'bp_before_member_header' );
 ?>
 
 <div id="cover-image-container">
-    <a id="header-cover-image" href="<?php bp_displayed_user_link(); ?>" aria-label="<?php esc_attr_e( 'View profile', 'buddypress' ); ?>"></a>
+    <a
+        id="header-cover-image"
+        href="<?php bp_displayed_user_link(); ?>"
+        aria-label="<?php esc_attr_e( 'View profile', 'buddypress' ); ?>"
+        <?php if ( $cover_image ) : ?>
+            style="background-image: url('<?php echo esc_url( $cover_image ); ?>');"
+        <?php endif; ?>
+    ></a>
 
     <div id="item-header-cover-image">
         <div id="item-header-avatar">

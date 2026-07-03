@@ -1,4 +1,72 @@
 (function () {
+  function initNotificationsBulkActions() {
+    var form = document.getElementById('notifications-bulk-management');
+
+    if (!form) {
+      return;
+    }
+
+    var selectAll = form.querySelector('#select-all-notifications');
+    var bulkSelect = form.querySelector('#notification-select');
+    var bulkButton = form.querySelector('#notification-bulk-manage');
+
+    function checks() {
+      return Array.prototype.slice.call(form.querySelectorAll('.notification-check'));
+    }
+
+    function syncSelectAll() {
+      var items = checks();
+      var selected = items.filter(function (item) {
+        return item.checked;
+      }).length;
+
+      if (selectAll) {
+        selectAll.checked = items.length > 0 && selected === items.length;
+        selectAll.indeterminate = selected > 0 && selected < items.length;
+      }
+    }
+
+    if (bulkButton && bulkSelect) {
+      bulkButton.disabled = !bulkSelect.value;
+
+      bulkSelect.addEventListener('change', function () {
+        bulkButton.disabled = !bulkSelect.value;
+      });
+    }
+
+    if (selectAll) {
+      selectAll.addEventListener('change', function () {
+        checks().forEach(function (item) {
+          item.checked = selectAll.checked;
+        });
+
+        syncSelectAll();
+      });
+    }
+
+    form.addEventListener('change', function (event) {
+      if (!event.target.classList.contains('notification-check')) {
+        return;
+      }
+
+      syncSelectAll();
+    });
+
+    form.addEventListener('submit', function (event) {
+      if (!bulkSelect || bulkSelect.value !== 'delete-all') {
+        return;
+      }
+
+      if (!window.confirm('Delete all notifications in this tab? This cannot be undone.')) {
+        event.preventDefault();
+      }
+    });
+
+    syncSelectAll();
+  }
+
+  initNotificationsBulkActions();
+
   var friendsSelect = document.getElementById('members-friends');
   var friendsList = document.getElementById('members-friends-list');
 
