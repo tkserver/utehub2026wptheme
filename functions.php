@@ -105,6 +105,27 @@ function utehub2026_enqueue_assets() {
             )
         );
     }
+
+    if ( function_exists( 'bp_is_user' ) && bp_is_user() ) {
+        $member_script_path    = get_stylesheet_directory() . '/assets/member-single.js';
+        $member_script_version = file_exists( $member_script_path ) ? (string) filemtime( $member_script_path ) : $script_version;
+
+        wp_enqueue_script(
+            'utehub2026-member-single',
+            get_template_directory_uri() . '/assets/member-single.js',
+            array(),
+            $member_script_version,
+            true
+        );
+
+        wp_localize_script(
+            'utehub2026-member-single',
+            'UteHubMemberSingle',
+            array(
+                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+            )
+        );
+    }
 }
 add_action( 'wp_enqueue_scripts', 'utehub2026_enqueue_assets' );
 
@@ -125,6 +146,14 @@ function utehub2026_members_ajax_querystring( $query_string, $object ) {
 
     if ( 'personal' === $scope && is_user_logged_in() ) {
         $query_args['user_id'] = bp_loggedin_user_id();
+    }
+
+    if ( 'friends' === $scope ) {
+        $displayed_user_id = isset( $_POST['user_id'] ) ? absint( $_POST['user_id'] ) : 0;
+
+        if ( $displayed_user_id ) {
+            $query_args['user_id'] = $displayed_user_id;
+        }
     }
 
     if ( '' !== $search_terms ) {
@@ -156,6 +185,59 @@ function utehub2026_members_ajax_template_loader() {
 }
 add_action( 'wp_ajax_members_filter', 'utehub2026_members_ajax_template_loader' );
 add_action( 'wp_ajax_nopriv_members_filter', 'utehub2026_members_ajax_template_loader' );
+
+function utehub2026_register_buddypress_cover_image_feature() {
+    if ( ! function_exists( 'bp_set_theme_compat_feature' ) ) {
+        return;
+    }
+
+    bp_set_theme_compat_feature(
+        'legacy',
+        array(
+            'name'     => 'cover_image',
+            'settings' => array(
+                'components'   => array( 'members', 'groups' ),
+                'width'        => 1300,
+                'height'       => 252,
+                'callback'     => 'bp_legacy_theme_cover_image',
+                'theme_handle' => 'utehub2026-style',
+            ),
+        )
+    );
+}
+add_action( 'bp_after_setup_theme', 'utehub2026_register_buddypress_cover_image_feature', 20 );
+
+function utehub2026_buddypress_cover_image_settings( $settings ) {
+    $settings['components']   = array( 'members', 'groups' );
+    $settings['width']        = 1300;
+    $settings['height']       = 252;
+    $settings['callback']     = 'bp_legacy_theme_cover_image';
+    $settings['theme_handle'] = 'utehub2026-style';
+
+    return $settings;
+}
+add_filter( 'bp_before_members_cover_image_settings_parse_args', 'utehub2026_buddypress_cover_image_settings' );
+add_filter( 'bp_before_groups_cover_image_settings_parse_args', 'utehub2026_buddypress_cover_image_settings' );
+
+function utehub2026_cover_photo_nav_label( $nav_html ) {
+    return str_replace( 'Change Cover Image', 'Change Cover Photo', $nav_html );
+}
+add_filter( 'bp_get_options_nav_change-cover-image', 'utehub2026_cover_photo_nav_label' );
+
+function utehub2026_member_screen_template() {
+    return 'members/single/home';
+}
+add_filter( 'bbp_member_forums_screen_topics', 'utehub2026_member_screen_template' );
+add_filter( 'bbp_member_forums_screen_replies', 'utehub2026_member_screen_template' );
+add_filter( 'bbp_member_forums_screen_engagements', 'utehub2026_member_screen_template' );
+add_filter( 'bbp_member_forums_screen_favorites', 'utehub2026_member_screen_template' );
+add_filter( 'bbp_member_forums_screen_subscriptions', 'utehub2026_member_screen_template' );
+add_filter( 'bp_settings_screen_general_settings', 'utehub2026_member_screen_template' );
+add_filter( 'bp_settings_screen_notification_settings', 'utehub2026_member_screen_template' );
+add_filter( 'bp_settings_screen_capabilities', 'utehub2026_member_screen_template' );
+add_filter( 'bp_settings_screen_delete_account', 'utehub2026_member_screen_template' );
+add_filter( 'bp_settings_screen_data', 'utehub2026_member_screen_template' );
+add_filter( 'bp_settings_screen_xprofile', 'utehub2026_member_screen_template' );
 
 function utehub2026_activity_ajax_querystring( $query_string, $object ) {
     if ( 'activity' !== $object || ! bp_is_post_request() || empty( $_POST['action'] ) || 'activity_widget_filter' !== $_POST['action'] ) {

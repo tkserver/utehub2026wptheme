@@ -58,6 +58,8 @@ get_header();
                     bp_get_template_part( 'members/single/invitations' );
                 elseif ( bp_is_user_settings() ) :
                     bp_get_template_part( 'members/single/settings' );
+                elseif ( bp_is_current_component( 'forums' ) ) :
+                    bp_get_template_part( 'members/single/forums' );
                 else :
                     bp_get_template_part( 'members/single/plugins' );
                 endif;

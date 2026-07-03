@@ -2768,6 +2768,38 @@ a:hover {
   font-size: 12px;
 }
 
+.member-plugin-shell #bbpress-forums {
+  margin: 0;
+}
+
+.member-plugin-shell #bbpress-forums .bbp-search-form {
+  margin: 0 0 16px;
+}
+
+.member-plugin-shell #bbpress-forums .bbp-search-form > div {
+  display: flex;
+  gap: 10px;
+}
+
+.member-plugin-shell #bbpress-forums .entry-title {
+  margin: 0 0 14px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.member-plugin-shell #bbpress-forums .bbp-user-section {
+  display: grid;
+  gap: 14px;
+  margin: 0 0 24px;
+}
+
+.member-plugin-shell #bbpress-forums .bbp-user-section:last-child {
+  margin-bottom: 0;
+}
+
 .member-single-shell #message.info,
 .member-single-shell #message.updated,
 .member-single-shell #message.error,
