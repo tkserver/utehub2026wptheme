@@ -166,6 +166,36 @@ function utehub2026_customize_register( $wp_customize ) {
             )
         );
     }
+
+    $wp_customize->add_section(
+        'utehub2026_forum_features',
+        array(
+            'title'       => __( 'Forum Features', 'utehub2026' ),
+            'priority'    => 46,
+            'description' => __( 'Toggle optional bbPress features shown on topic pages.', 'utehub2026' ),
+        )
+    );
+
+    $wp_customize->add_setting(
+        'utehub2026_show_favorite_topic',
+        array(
+            'default'           => true,
+            'sanitize_callback' => 'wp_validate_boolean',
+        )
+    );
+
+    $wp_customize->add_control(
+        'utehub2026_show_favorite_topic',
+        array(
+            'label'   => __( 'Show "Favorite" link on topics', 'utehub2026' ),
+            'section' => 'utehub2026_forum_features',
+            'type'    => 'checkbox',
+        )
+    );
+}
+
+function utehub2026_is_favorite_topic_enabled() {
+    return (bool) get_theme_mod( 'utehub2026_show_favorite_topic', true );
 }
 
 function utehub2026_sanitize_multiline_text( $value ) {
@@ -252,9 +282,9 @@ function utehub2026_register_sidebars() {
             array(
                 'name'          => __( $label, 'utehub2026' ),
                 'id'            => $id,
-                'before_widget' => '<section id="%1$s" class="panel widget %2$s">',
+                'before_widget' => '<section id="%1$s" class="panel widget %2$s"><div class="panel-b">',
                 'after_widget'  => '</div></section>',
-                'before_title'  => '<h2 class="panel-h widget-title">',
+                'before_title'  => '</div><h2 class="panel-h widget-title">',
                 'after_title'   => '</h2><div class="panel-b">',
             )
         );
@@ -694,18 +724,24 @@ function utehub2026_render_avatar( $user_id = 0, $size = 48, $args = array() ) {
 }
 
 function utehub2026_get_like_data( $post_id ) {
+    $post_id = (int) $post_id;
+
     if ( function_exists( 'tk_api_get_like_data' ) ) {
-        return tk_api_get_like_data( $post_id );
+        $data      = tk_api_get_like_data( $post_id );
+        $post_type = get_post_type( $post_id );
+
+        if ( $data && ! empty( $data->post_type ) && $post_type && $data->post_type !== $post_type ) {
+            return null;
+        }
+
+        return $data;
     }
 
     return null;
 }
 
 function utehub2026_render_vote_pills( $post_id ) {
-    if ( function_exists( 'tk_like_buttons_optimized' ) ) {
-        return tk_like_buttons_optimized();
-    }
-
+    $post_id       = (int) $post_id;
     $data          = utehub2026_get_like_data( $post_id );
     $likes         = $data && isset( $data->like_count ) ? (int) $data->like_count : 0;
     $dislikes      = $data && isset( $data->dislike_count ) ? (int) $data->dislike_count : 0;
@@ -713,10 +749,136 @@ function utehub2026_render_vote_pills( $post_id ) {
     $liked_users   = $data && ! empty( $data->like_user_ids ) ? array_map( 'intval', (array) $data->like_user_ids ) : array();
     $disliked_users= $data && ! empty( $data->dislike_user_ids ) ? array_map( 'intval', (array) $data->dislike_user_ids ) : array();
 
+    if ( function_exists( 'tklike_user_logged_in_optimized' ) ) {
+        $post_type        = get_post_type( $post_id );
+        $like_counter     = $likes > 0 ? number_format_i18n( $likes ) : '';
+        $dislike_counter  = $dislikes > 0 ? number_format_i18n( $dislikes ) : '';
+        $user_liked       = in_array( $current_user, $liked_users, true );
+        $user_disliked    = in_array( $current_user, $disliked_users, true );
+        $like_class       = 'likeButton';
+        $dislike_class    = 'dislikeButton';
+        $is_logged_in     = 'yes' === tklike_user_logged_in_optimized();
+
+        if ( $is_logged_in && $user_liked ) {
+            $like_class    .= ' liked';
+            $dislike_class .= ' dislike_disabled';
+        } elseif ( $is_logged_in && $user_disliked ) {
+            $like_class    .= ' like_disabled';
+            $dislike_class .= ' liked';
+        } elseif ( ! $is_logged_in ) {
+            $like_class    .= ' disabled';
+            $dislike_class .= ' disabled';
+        }
+
+        $button_tag = $is_logged_in ? 'a' : 'span';
+        $href       = $is_logged_in ? ' href="javascript:void(0);"' : '';
+        $data_attrs = $is_logged_in ? ' data-item-id="' . esc_attr( $post_id ) . '" data-user-id="' . esc_attr( $current_user ) . '" data-post-type="' . esc_attr( $post_type ) . '"' : '';
+
+        return '<span class="vote tk-like-buttons" data-item-id="' . esc_attr( $post_id ) . '"><' . $button_tag . $href . ' id="likeButton_' . esc_attr( $post_id ) . '" class="' . esc_attr( $like_class ) . '"' . $data_attrs . '></' . $button_tag . '><span id="like_count_' . esc_attr( $post_id ) . '" class="like_count">' . esc_html( $like_counter ) . '</span><' . $button_tag . $href . ' id="dislikeButton_' . esc_attr( $post_id ) . '" class="' . esc_attr( $dislike_class ) . '"' . $data_attrs . '></' . $button_tag . '><span id="dislike_count_' . esc_attr( $post_id ) . '" class="dislike_count">' . esc_html( $dislike_counter ) . '</span></span>';
+    }
+
     $up_class   = in_array( $current_user, $liked_users, true ) ? 'vb up active' : 'vb up';
     $down_class = in_array( $current_user, $disliked_users, true ) ? 'vb down active' : 'vb down';
 
     return '<span class="vote"><span class="' . esc_attr( $up_class ) . '">' . utehub2026_get_svg( 'thumb-up' ) . '<span>' . esc_html( $likes ) . '</span></span><span class="' . esc_attr( $down_class ) . '">' . utehub2026_get_svg( 'thumb-down' ) . ( $dislikes ? '<span>' . esc_html( $dislikes ) . '</span>' : '' ) . '</span></span>';
+}
+
+function utehub2026_delete_mismatched_like_row( $post_id, $post_type = '' ) {
+    global $wpdb;
+
+    $post_id   = (int) $post_id;
+    $post_type = $post_type ? $post_type : get_post_type( $post_id );
+
+    if ( ! $post_id || ! $post_type ) {
+        return;
+    }
+
+    $table_name = $wpdb->prefix . 'tkLike_data';
+    $row        = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT id, post_type FROM $table_name WHERE item_id = %d LIMIT 1",
+            $post_id
+        )
+    );
+
+    if ( $row && ! empty( $row->post_type ) && $row->post_type !== $post_type ) {
+        $wpdb->delete( $table_name, array( 'id' => (int) $row->id ), array( '%d' ) );
+        wp_cache_delete( 'tklike_data_' . $post_id );
+    }
+}
+
+function utehub2026_register_tklike_ajax_guard() {
+    if ( function_exists( 'tklike_handle_like_ajax' ) ) {
+        remove_action( 'wp_ajax_tklike_handle_like', 'tklike_handle_like_ajax' );
+        remove_action( 'wp_ajax_nopriv_tklike_handle_like', 'tklike_handle_like_ajax' );
+
+        add_action( 'wp_ajax_tklike_handle_like', 'utehub2026_handle_tklike_ajax' );
+        add_action( 'wp_ajax_nopriv_tklike_handle_like', 'utehub2026_handle_tklike_ajax' );
+    }
+}
+add_action( 'init', 'utehub2026_register_tklike_ajax_guard' );
+
+function utehub2026_handle_tklike_ajax() {
+    check_ajax_referer( 'tklike-nonce', 'nonce' );
+
+    $item_id     = isset( $_POST['item_id'] ) ? (int) $_POST['item_id'] : 0;
+    $user_id     = isset( $_POST['user_id'] ) ? (int) $_POST['user_id'] : 0;
+    $action_type = isset( $_POST['action_type'] ) ? sanitize_text_field( wp_unslash( $_POST['action_type'] ) ) : '';
+    $post_type   = isset( $_POST['post_type'] ) ? sanitize_text_field( wp_unslash( $_POST['post_type'] ) ) : '';
+    $real_type   = $item_id ? get_post_type( $item_id ) : '';
+
+    if ( ! $item_id || ! $user_id || ! $real_type || ! in_array( $action_type, array( 'like', 'unlike', 'dislike', 'undislike' ), true ) ) {
+        wp_send_json_error( array( 'message' => 'Invalid like request.' ), 400 );
+    }
+
+    $post_type = $post_type && $post_type === $real_type ? $post_type : $real_type;
+    utehub2026_delete_mismatched_like_row( $item_id, $post_type );
+
+    if ( function_exists( 'tklike_update_like_data' ) ) {
+        wp_send_json( tklike_update_like_data( $item_id, $user_id, $action_type, $post_type ) );
+    }
+
+    wp_send_json_error( array( 'message' => 'Like plugin unavailable.' ), 500 );
+}
+
+function utehub2026_is_topic_activity_post( $post_id, $topic_id ) {
+    $post_id  = (int) $post_id;
+    $topic_id = (int) $topic_id;
+
+    if ( ! $post_id || ! $topic_id || ! get_post( $post_id ) ) {
+        return false;
+    }
+
+    if ( $post_id === $topic_id ) {
+        return true;
+    }
+
+    if ( function_exists( 'bbp_get_reply_post_type' ) && bbp_get_reply_post_type() === get_post_type( $post_id ) ) {
+        $reply_topic_id = function_exists( 'bbp_get_reply_topic_id' ) ? (int) bbp_get_reply_topic_id( $post_id ) : 0;
+        return $reply_topic_id === $topic_id || (int) wp_get_post_parent_id( $post_id ) === $topic_id;
+    }
+
+    return false;
+}
+
+function utehub2026_get_topic_last_activity_id( $topic_id ) {
+    $topic_id = (int) $topic_id;
+
+    if ( ! $topic_id ) {
+        return 0;
+    }
+
+    $last_active_id = function_exists( 'bbp_get_topic_last_active_id' ) ? (int) bbp_get_topic_last_active_id( $topic_id ) : 0;
+    if ( utehub2026_is_topic_activity_post( $last_active_id, $topic_id ) ) {
+        return $last_active_id;
+    }
+
+    $last_reply_id = function_exists( 'bbp_get_topic_last_reply_id' ) ? (int) bbp_get_topic_last_reply_id( $topic_id ) : 0;
+    if ( utehub2026_is_topic_activity_post( $last_reply_id, $topic_id ) ) {
+        return $last_reply_id;
+    }
+
+    return $topic_id;
 }
 
 function utehub2026_get_relative_time( $post_id ) {
@@ -1306,8 +1468,8 @@ function utehub2026_render_topics_feed( $base_url = '' ) {
                             $forum_title    = $forum_id ? get_the_title( $forum_id ) : '';
                             $reply_count    = function_exists( 'bbp_get_topic_post_count' ) ? (int) bbp_get_topic_post_count( $topic_id ) : 0;
                             $voice_count    = function_exists( 'bbp_get_topic_voice_count' ) ? (int) bbp_get_topic_voice_count( $topic_id ) : 0;
-                            $last_active_id = function_exists( 'bbp_get_topic_last_active_id' ) ? (int) bbp_get_topic_last_active_id( $topic_id ) : $topic_id;
-                            $last_author_id = (int) get_post_field( 'post_author', $last_active_id ? $last_active_id : $topic_id );
+                            $last_active_id = utehub2026_get_topic_last_activity_id( $topic_id );
+                            $last_author_id = (int) get_post_field( 'post_author', $last_active_id );
                             $started_by_id  = (int) get_post_field( 'post_author', $topic_id );
                             $heat           = utehub2026_get_topic_heat( max( 0, $reply_count - 1 ) );
                             $classes        = 'uh-topic';
@@ -1345,7 +1507,7 @@ function utehub2026_render_topics_feed( $base_url = '' ) {
                                     <?php echo utehub2026_render_avatar( $last_author_id, 38, array( 'name' => get_the_author_meta( 'display_name', $last_author_id ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                                     <div class="lp">
                                         <span class="who"><?php echo esc_html( get_the_author_meta( 'display_name', $last_author_id ) ); ?></span>
-                                        <span class="when"><?php echo utehub2026_get_svg( 'clock' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php echo esc_html( utehub2026_get_relative_time( $last_active_id ? $last_active_id : $topic_id ) ); ?></span>
+                                        <span class="when"><?php echo utehub2026_get_svg( 'clock' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php echo esc_html( utehub2026_get_relative_time( $last_active_id ) ); ?></span>
                                     </div>
                                 </div>
                             </article>

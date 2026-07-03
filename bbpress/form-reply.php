@@ -15,7 +15,15 @@ if ( bbp_current_user_can_access_create_reply_form() ) : ?>
 
                 <?php do_action( 'bbp_template_notices' ); ?>
                 <?php bbp_get_template_part( 'form', 'anonymous' ); ?>
-                <?php bbp_the_content( array( 'context' => 'reply', 'textarea_rows' => 8 ) ); ?>
+                <?php
+                bbp_the_content(
+                    array(
+                        'context'       => 'reply',
+                        'textarea_rows' => 8,
+                        'tinymce'       => false,
+                    )
+                );
+                ?>
 
                 <?php if ( bbp_is_subscriptions_active() && ! bbp_is_anonymous() ) : ?>
                     <p>

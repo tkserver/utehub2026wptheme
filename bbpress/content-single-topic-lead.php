@@ -26,9 +26,9 @@ $admin_html = utehub2026_get_topic_admin_links_html();
                 </div>
             </div>
             <div class="pauthor">
-                <?php echo utehub2026_render_avatar( $author_id, 84, array( 'name' => bbp_get_topic_author_display_name( $topic_id ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                <a class="pauthor-avatar" href="<?php echo esc_url( bbp_get_topic_author_url( $topic_id ) ); ?>"><?php echo utehub2026_render_avatar( $author_id, 84, array( 'name' => bbp_get_topic_author_display_name( $topic_id ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
                 <div class="pauthor-meta">
-                    <div class="name"><?php bbp_topic_author_display_name( $topic_id ); ?></div>
+                    <div class="name"><a href="<?php echo esc_url( bbp_get_topic_author_url( $topic_id ) ); ?>"><?php bbp_topic_author_display_name( $topic_id ); ?></a></div>
                     <div class="rank"><?php bbp_topic_author_role(); ?></div>
                     <?php if ( current_user_can( 'moderate', $topic_id ) ) : ?>
                         <div class="ip"><?php bbp_author_ip( $topic_id ); ?></div>

@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 $topic_id       = bbp_get_topic_id();
 $forum_id       = bbp_get_topic_forum_id( $topic_id );
 $forum_title    = $forum_id ? get_the_title( $forum_id ) : '';
-$last_active_id = (int) bbp_get_topic_last_active_id( $topic_id );
+$last_active_id = utehub2026_get_topic_last_activity_id( $topic_id );
 $last_author_id = (int) get_post_field( 'post_author', $last_active_id );
 ?>
 <div class="uh-wrap">
@@ -25,8 +25,18 @@ $last_author_id = (int) get_post_field( 'post_author', $last_active_id );
             <?php endif; ?>
             <span class="sep">›</span>
             <span class="cur"><?php bbp_topic_title(); ?></span>
-            <?php if ( function_exists( 'bbp_get_user_favorites_link' ) && is_user_logged_in() ) : ?>
-                <span class="fav"><?php echo utehub2026_get_svg( 'favorite' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>Favorite</span>
+            <?php if ( utehub2026_is_favorite_topic_enabled() && function_exists( 'bbp_is_favorites_active' ) && bbp_is_favorites_active() && is_user_logged_in() ) : ?>
+                <?php
+                echo bbp_get_user_favorites_link( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                    array(
+                        'favorite'  => utehub2026_get_svg( 'favorite' ) . 'Favorite',
+                        'favorited' => utehub2026_get_svg( 'favorite' ) . 'Favorited',
+                        'object_id' => $topic_id,
+                        'before'    => '<span class="fav">',
+                        'after'     => '</span>',
+                    )
+                );
+                ?>
             <?php endif; ?>
         </div>
 

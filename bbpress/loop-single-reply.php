@@ -35,9 +35,9 @@ if ( $depth > 0 ) {
             </div>
         </div>
         <div class="pauthor">
-            <?php echo utehub2026_render_avatar( $author_id, 84, array( 'name' => bbp_get_reply_author_display_name( $reply_id ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+            <a class="pauthor-avatar" href="<?php echo esc_url( bbp_get_reply_author_url( $reply_id ) ); ?>"><?php echo utehub2026_render_avatar( $author_id, 84, array( 'name' => bbp_get_reply_author_display_name( $reply_id ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
             <div class="pauthor-meta">
-                <div class="name"><?php bbp_reply_author_display_name( $reply_id ); ?></div>
+                <div class="name"><a href="<?php echo esc_url( bbp_get_reply_author_url( $reply_id ) ); ?>"><?php bbp_reply_author_display_name( $reply_id ); ?></a></div>
                 <div class="rank"><?php bbp_reply_author_role( array( 'reply_id' => $reply_id ) ); ?></div>
                 <?php if ( current_user_can( 'moderate', $reply_id ) ) : ?>
                     <div class="ip"><?php bbp_author_ip( $reply_id ); ?></div>

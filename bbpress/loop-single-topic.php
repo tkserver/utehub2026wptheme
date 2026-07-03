@@ -13,8 +13,8 @@ $topic_forum_id   = bbp_get_topic_forum_id( $topic_id );
 $forum_title      = $topic_forum_id ? get_the_title( $topic_forum_id ) : '';
 $reply_count      = (int) bbp_get_topic_post_count( $topic_id );
 $voice_count      = (int) bbp_get_topic_voice_count( $topic_id );
-$last_active_id   = (int) bbp_get_topic_last_active_id( $topic_id );
-$last_author_id   = (int) get_post_field( 'post_author', $last_active_id ? $last_active_id : $topic_id );
+$last_active_id   = utehub2026_get_topic_last_activity_id( $topic_id );
+$last_author_id   = (int) get_post_field( 'post_author', $last_active_id );
 $started_by_id    = (int) get_post_field( 'post_author', $topic_id );
 $classes          = 'uh-topic';
 $heat             = utehub2026_get_topic_heat( max( 0, $reply_count - 1 ) );
@@ -62,7 +62,7 @@ if ( bbp_is_topic_sticky( $topic_id ) || bbp_is_topic_super_sticky( $topic_id ) 
         <?php echo utehub2026_render_avatar( $last_author_id ? $last_author_id : $started_by_id, 38, array( 'name' => get_the_author_meta( 'display_name', $last_author_id ? $last_author_id : $started_by_id ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
         <div class="lp">
             <span class="who"><?php echo esc_html( get_the_author_meta( 'display_name', $last_author_id ? $last_author_id : $started_by_id ) ); ?></span>
-            <span class="when"><?php echo utehub2026_get_svg( 'clock' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php echo esc_html( utehub2026_get_relative_time( $last_active_id ? $last_active_id : $topic_id ) ); ?></span>
+            <span class="when"><?php echo utehub2026_get_svg( 'clock' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php echo esc_html( utehub2026_get_relative_time( $last_active_id ) ); ?></span>
         </div>
     </div>
 </article>
