@@ -26,10 +26,10 @@ do_action( 'bp_before_directory_members_page' );
                     </div>
 
                     <div class="members-head-tools">
-                        <div id="members-dir-search" class="search dir-search" role="search">
+                        <div id="members-dir-search" class="search dir-search" role="search" data-bp-search="members">
                             <?php echo utehub2026_get_svg( 'search' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                             <label for="<?php bp_search_input_name(); ?>" class="screen-reader-text"><?php bp_search_placeholder(); ?></label>
-                            <input type="text" name="<?php echo esc_attr( bp_core_get_component_search_query_arg() ); ?>" id="<?php bp_search_input_name(); ?>" placeholder="<?php bp_search_placeholder(); ?>" />
+                            <input type="search" name="<?php echo esc_attr( bp_core_get_component_search_query_arg() ); ?>" id="<?php bp_search_input_name(); ?>" placeholder="<?php bp_search_placeholder(); ?>" />
                             <button type="submit"><?php esc_html_e( 'Search', 'buddypress' ); ?></button>
                         </div>
                     </div>
@@ -40,10 +40,10 @@ do_action( 'bp_before_directory_members_page' );
                 <div class="members-toolbar">
                     <div class="item-list-tabs members-tabs" aria-label="<?php esc_attr_e( 'Members directory main navigation', 'buddypress' ); ?>" role="navigation">
                         <ul>
-                            <li class="selected" id="members-all"><a href="<?php bp_members_directory_permalink(); ?>"><?php printf( esc_html__( 'All Members %s', 'buddypress' ), '<span>' . esc_html( bp_get_total_member_count() ) . '</span>' ); ?></a></li>
+                            <li class="selected" id="members-all" data-bp-scope="all" data-bp-object="members"><a href="<?php bp_members_directory_permalink(); ?>"><?php printf( esc_html__( 'All Members %s', 'buddypress' ), '<span>' . esc_html( bp_get_total_member_count() ) . '</span>' ); ?></a></li>
 
                             <?php if ( is_user_logged_in() && bp_is_active( 'friends' ) && bp_get_total_friend_count( bp_loggedin_user_id() ) ) : ?>
-                                <li id="members-personal"><a href="<?php bp_loggedin_user_link( array( bp_get_friends_slug(), 'my-friends' ) ); ?>"><?php printf( esc_html__( 'My Friends %s', 'buddypress' ), '<span>' . esc_html( bp_get_total_friend_count( bp_loggedin_user_id() ) ) . '</span>' ); ?></a></li>
+                                <li id="members-personal" data-bp-scope="personal" data-bp-object="members"><a href="<?php bp_loggedin_user_link( array( bp_get_friends_slug(), 'my-friends' ) ); ?>"><?php printf( esc_html__( 'My Friends %s', 'buddypress' ), '<span>' . esc_html( bp_get_total_friend_count( bp_loggedin_user_id() ) ) . '</span>' ); ?></a></li>
                             <?php endif; ?>
 
                             <?php do_action( 'bp_members_directory_member_types' ); ?>
@@ -56,7 +56,7 @@ do_action( 'bp_before_directory_members_page' );
 
                             <li id="members-order-select" class="last filter">
                                 <label for="members-order-by"><?php esc_html_e( 'Order By:', 'buddypress' ); ?></label>
-                                <select id="members-order-by">
+                                <select id="members-order-by" data-bp-filter="members">
                                     <option value="active"><?php esc_html_e( 'Last Active', 'buddypress' ); ?></option>
                                     <option value="newest"><?php esc_html_e( 'Newest Registered', 'buddypress' ); ?></option>
 
@@ -73,7 +73,7 @@ do_action( 'bp_before_directory_members_page' );
 
                 <h2 class="screen-reader-text"><?php esc_html_e( 'Members directory', 'buddypress' ); ?></h2>
 
-                <div id="members-dir-list" class="members members-directory-results dir-list">
+                <div id="members-dir-list" class="members members-directory-results dir-list" data-bp-list="members">
                     <?php bp_get_template_part( 'members/members-loop' ); ?>
                 </div>
 

@@ -61,8 +61,79 @@ function utehub2026_enqueue_assets() {
         $script_version,
         true
     );
+
+    if ( function_exists( 'bp_is_members_directory' ) && bp_is_members_directory() ) {
+        $members_script_path    = get_stylesheet_directory() . '/assets/members-directory.js';
+        $members_script_version = file_exists( $members_script_path ) ? (string) filemtime( $members_script_path ) : $script_version;
+
+        wp_enqueue_script(
+            'utehub2026-members-directory',
+            get_template_directory_uri() . '/assets/members-directory.js',
+            array(),
+            $members_script_version,
+            true
+        );
+
+        wp_localize_script(
+            'utehub2026-members-directory',
+            'UteHubMembersDirectory',
+            array(
+                'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
+                'membersUrl' => function_exists( 'bp_get_members_directory_permalink' ) ? bp_get_members_directory_permalink() : home_url( '/members/' ),
+            )
+        );
+    }
 }
 add_action( 'wp_enqueue_scripts', 'utehub2026_enqueue_assets' );
+
+function utehub2026_members_ajax_querystring( $query_string, $object ) {
+    if ( 'members' !== $object || ! bp_is_post_request() || empty( $_POST['action'] ) || 'members_filter' !== $_POST['action'] ) {
+        return $query_string;
+    }
+
+    $allowed_filters = array( 'active', 'newest', 'alphabetical', 'random', 'popular', 'online' );
+    $filter          = isset( $_POST['filter'] ) ? sanitize_key( wp_unslash( $_POST['filter'] ) ) : 'active';
+    $scope           = isset( $_POST['scope'] ) ? sanitize_key( wp_unslash( $_POST['scope'] ) ) : 'all';
+    $page            = isset( $_POST['page'] ) ? absint( $_POST['page'] ) : 1;
+    $search_terms    = isset( $_POST['search_terms'] ) ? sanitize_text_field( wp_unslash( $_POST['search_terms'] ) ) : '';
+    $query_args      = array(
+        'type' => in_array( $filter, $allowed_filters, true ) ? $filter : 'active',
+        'page' => max( 1, $page ),
+    );
+
+    if ( 'personal' === $scope && is_user_logged_in() ) {
+        $query_args['user_id'] = bp_loggedin_user_id();
+    }
+
+    if ( '' !== $search_terms ) {
+        $query_args['search_terms'] = $search_terms;
+    }
+
+    return build_query( $query_args );
+}
+
+function utehub2026_members_ajax_template_loader() {
+    if ( ! bp_is_post_request() ) {
+        wp_die();
+    }
+
+    $object = isset( $_POST['object'] ) ? sanitize_key( wp_unslash( $_POST['object'] ) ) : '';
+
+    if ( 'members' !== $object || ! function_exists( 'bp_is_active' ) || ! bp_is_active( 'members' ) ) {
+        wp_die();
+    }
+
+    add_filter( 'bp_ajax_querystring', 'utehub2026_members_ajax_querystring', 20, 2 );
+
+    if ( function_exists( 'bp_update_is_directory' ) && ! bp_current_action() ) {
+        bp_update_is_directory( true, 'members' );
+    }
+
+    bp_get_template_part( 'members/members-loop' );
+    wp_die();
+}
+add_action( 'wp_ajax_members_filter', 'utehub2026_members_ajax_template_loader' );
+add_action( 'wp_ajax_nopriv_members_filter', 'utehub2026_members_ajax_template_loader' );
 
 function utehub2026_customize_register( $wp_customize ) {
     $wp_customize->add_section(
