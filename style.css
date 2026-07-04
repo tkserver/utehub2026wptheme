@@ -1868,6 +1868,7 @@ a:hover {
   padding: 0 9px;
 }
 
+#bbpress-forums .bbp-reply-form .bbp-the-content-wrapper,
 #bbpress-forums .bbp-topic-form .bbp-the-content-wrapper {
   overflow: hidden;
   border: 1px solid var(--line-2);
@@ -1875,6 +1876,7 @@ a:hover {
   background: #fff;
 }
 
+#bbpress-forums .bbp-reply-form div.bbp-the-content-wrapper textarea.bbp-the-content,
 #bbpress-forums .bbp-topic-form div.bbp-the-content-wrapper textarea.bbp-the-content {
   min-height: 260px;
   padding: 18px 16px;
@@ -1885,6 +1887,7 @@ a:hover {
   line-height: 1.55;
 }
 
+#bbpress-forums .bbp-reply-form div.bbp-the-content-wrapper textarea.bbp-the-content:focus,
 #bbpress-forums .bbp-topic-form div.bbp-the-content-wrapper textarea.bbp-the-content:focus {
   border: 0;
   box-shadow: none;

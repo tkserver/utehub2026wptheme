@@ -650,6 +650,7 @@ function utehub2026_get_home_topics_heading() {
 function utehub2026_register_sidebars() {
     $rail_sidebars = array(
         'front-page-sidebar' => 'Standard Right Rail',
+        'page-sidebar'       => 'Page Right Rail',
         'topic-sidebar'      => 'Topic Right Rail',
         'pickem-sidebar'     => 'Pick Em Right Rail',
         'predict-sidebar'    => 'Predict Right Rail',
@@ -694,6 +695,10 @@ add_action( 'widgets_init', 'utehub2026_register_sidebars' );
 function utehub2026_get_right_rail_sidebar_id( $context = '' ) {
     if ( 'full' === $context || 'none' === $context ) {
         return '';
+    }
+
+    if ( 'page' === $context ) {
+        return 'page-sidebar';
     }
 
     if ( 'topic' === $context ) {
@@ -742,7 +747,7 @@ function utehub2026_render_content_page_layout( $args = array() ) {
     $args = wp_parse_args(
         $args,
         array(
-            'context'     => 'archive',
+            'context'     => 'page',
             'full_width'  => false,
             'title'       => get_the_title(),
             'show_title'  => true,
@@ -1851,6 +1856,13 @@ function utehub2026_render_topics_feed( $base_url = '' ) {
                             $last_active_id = utehub2026_get_topic_last_activity_id( $topic_id );
                             $last_author_id = (int) get_post_field( 'post_author', $last_active_id );
                             $started_by_id  = (int) get_post_field( 'post_author', $topic_id );
+                            $forum_url      = $forum_id ? ( function_exists( 'bbp_get_forum_permalink' ) ? bbp_get_forum_permalink( $forum_id ) : get_permalink( $forum_id ) ) : '';
+                            $started_by_url = function_exists( 'bbp_get_topic_author_url' ) ? bbp_get_topic_author_url( $topic_id ) : get_author_posts_url( $started_by_id );
+                            $last_user_id   = $last_author_id ? $last_author_id : $started_by_id;
+                            $last_user_name = get_the_author_meta( 'display_name', $last_user_id );
+                            $last_user_url  = $last_active_id && $last_active_id !== $topic_id && function_exists( 'bbp_get_reply_author_url' )
+                                ? bbp_get_reply_author_url( $last_active_id )
+                                : $started_by_url;
                             $heat           = utehub2026_get_topic_heat( max( 0, $reply_count - 1 ) );
                             $classes        = 'uh-topic';
 
@@ -1864,8 +1876,8 @@ function utehub2026_render_topics_feed( $base_url = '' ) {
                                         <?php if ( function_exists( 'bbp_is_topic_sticky' ) && ( bbp_is_topic_sticky( $topic_id ) || bbp_is_topic_super_sticky( $topic_id ) ) ) : ?>
                                             <span class="chip pin"><?php echo utehub2026_get_svg( 'pin' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>Pinned</span>
                                         <?php endif; ?>
-                                        <?php if ( $forum_title ) : ?>
-                                            <span class="chip cat"><?php echo esc_html( $forum_title ); ?></span>
+                                        <?php if ( $forum_title && $forum_url ) : ?>
+                                            <a class="chip cat" href="<?php echo esc_url( $forum_url ); ?>"><?php echo esc_html( $forum_title ); ?></a>
                                         <?php endif; ?>
                                         <?php if ( $heat ) : ?>
                                             <span class="heat"><?php echo esc_html( str_repeat( '🔥', $heat ) ); ?></span>
@@ -1873,8 +1885,10 @@ function utehub2026_render_topics_feed( $base_url = '' ) {
                                     </div>
                                     <a class="t-title" href="<?php echo esc_url( get_permalink( $topic_id ) ); ?>"><?php echo esc_html( get_the_title( $topic_id ) ); ?></a>
                                     <div class="t-by">
-                                        <?php echo utehub2026_render_avatar( $started_by_id, 20, array( 'class' => 't-by-av', 'name' => get_the_author_meta( 'display_name', $started_by_id ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-                                        Started by <a href="<?php echo esc_url( function_exists( 'bbp_get_topic_author_url' ) ? bbp_get_topic_author_url( $topic_id ) : get_author_posts_url( (int) get_post_field( 'post_author', $topic_id ) ) ); ?>"><?php echo esc_html( function_exists( 'bbp_get_topic_author_display_name' ) ? bbp_get_topic_author_display_name( $topic_id ) : get_the_author_meta( 'display_name', (int) get_post_field( 'post_author', $topic_id ) ) ); ?></a>
+                                        <a href="<?php echo esc_url( $started_by_url ); ?>">
+                                            <?php echo utehub2026_render_avatar( $started_by_id, 20, array( 'class' => 't-by-av', 'name' => get_the_author_meta( 'display_name', $started_by_id ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                                        </a>
+                                        Started by <a href="<?php echo esc_url( $started_by_url ); ?>"><?php echo esc_html( function_exists( 'bbp_get_topic_author_display_name' ) ? bbp_get_topic_author_display_name( $topic_id ) : get_the_author_meta( 'display_name', $started_by_id ) ); ?></a>
                                     </div>
                                 </div>
 
@@ -1884,9 +1898,11 @@ function utehub2026_render_topics_feed( $base_url = '' ) {
                                 </div>
 
                                 <div class="t-last">
-                                    <?php echo utehub2026_render_avatar( $last_author_id, 38, array( 'name' => get_the_author_meta( 'display_name', $last_author_id ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                                    <a href="<?php echo esc_url( $last_user_url ); ?>">
+                                        <?php echo utehub2026_render_avatar( $last_user_id, 38, array( 'name' => $last_user_name ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                                    </a>
                                     <div class="lp">
-                                        <span class="who"><?php echo esc_html( get_the_author_meta( 'display_name', $last_author_id ) ); ?></span>
+                                        <a class="who" href="<?php echo esc_url( $last_user_url ); ?>"><?php echo esc_html( $last_user_name ); ?></a>
                                         <span class="when"><?php echo utehub2026_get_svg( 'clock' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php echo esc_html( utehub2026_get_relative_time( $last_active_id ) ); ?></span>
                                     </div>
                                 </div>

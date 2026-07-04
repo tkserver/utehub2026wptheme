@@ -1,6 +1,6 @@
 <?php
 /**
- * Template Name: Users Online Page
+ * Template Name: Right Rail Page
  *
  * @package UteHub2026
  */
