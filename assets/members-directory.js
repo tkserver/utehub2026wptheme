@@ -1,9 +1,22 @@
 (function () {
   var select = document.getElementById('members-order-by');
   var list = document.getElementById('members-dir-list');
+  var pendingRequest = null;
 
   if (!select || !list || !window.UteHubMembersDirectory) {
     return;
+  }
+
+  function debounce(fn, delay) {
+    var timeout;
+    return function () {
+      var args = arguments;
+      var context = this;
+      clearTimeout(timeout);
+      timeout = setTimeout(function () {
+        fn.apply(context, args);
+      }, delay);
+    };
   }
 
   function getSelectedScope() {
@@ -69,11 +82,15 @@
       });
   }
 
+  var debouncedRefresh = debounce(function (orderBy) {
+    refreshMembers(orderBy);
+  }, 300);
+
   document.addEventListener('change', function (event) {
     if (event.target !== select) {
       return;
     }
 
-    refreshMembers(select.value);
+    debouncedRefresh(select.value);
   });
 }());

@@ -12,6 +12,18 @@
   config.ajaxUrl = config.ajaxUrl || shell.getAttribute('data-ajax-url') || window.location.origin + '/wp-admin/admin-ajax.php';
   config.activityUrl = config.activityUrl || shell.getAttribute('data-activity-url') || window.location.href.split('#')[0];
 
+  function debounce(fn, delay) {
+    var timeout;
+    return function () {
+      var args = arguments;
+      var context = this;
+      clearTimeout(timeout);
+      timeout = setTimeout(function () {
+        fn.apply(context, args);
+      }, delay);
+    };
+  }
+
   function getSelectedScope() {
     var selected = shell.querySelector('.activity-type-tabs li.selected');
 
@@ -86,6 +98,10 @@
       });
   }
 
+  var debouncedRefreshActivity = debounce(function (scope, activityFilter) {
+    refreshActivity(scope, activityFilter);
+  }, 300);
+
   shell.addEventListener('click', function (event) {
     var link = event.target.closest('.activity-type-tabs a');
     var item = link ? link.closest('li[id^="activity-"]') : null;
@@ -97,14 +113,14 @@
     event.preventDefault();
     event.stopImmediatePropagation();
 
-    refreshActivity(item.id.replace(/^activity-/, ''), filter.value);
+    debouncedRefreshActivity(item.id.replace(/^activity-/, ''), filter.value);
   }, true);
 
   filter.addEventListener('change', function (event) {
     event.preventDefault();
     event.stopImmediatePropagation();
 
-    refreshActivity(getSelectedScope(), filter.value);
+    debouncedRefreshActivity(getSelectedScope(), filter.value);
   }, true);
 
   if (searchForm) {
