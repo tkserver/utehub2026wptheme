@@ -6,6 +6,7 @@ add_filter( 'bp_email_use_wp_mail', '__return_true' );
 add_filter( 'show_admin_bar', '__return_false' );
 add_action( 'template_redirect', 'utehub2026_ensure_server_keys_exist', 1 );
 add_action( 'init', 'utehub2026_stop_heartbeat', 1 );
+add_action( 'wp_head', 'utehub2026_dark_mode_inline_style', 1 );
 
 function utehub2026_ensure_server_keys_exist() {
     if ( ! isset( $_SERVER['HTTP_HOST'] ) ) {
@@ -564,6 +565,37 @@ function utehub2026_customize_register( $wp_customize ) {
             'type'    => 'checkbox',
         )
     );
+
+    $wp_customize->add_section(
+        'utehub2026_dark_mode',
+        array(
+            'title'       => __( 'Dark Mode', 'utehub2026' ),
+            'priority'    => 48,
+            'description' => __( 'Configure dark mode behavior for the theme.', 'utehub2026' ),
+        )
+    );
+
+    $wp_customize->add_setting(
+        'utehub2026_dark_mode_default',
+        array(
+            'default'           => 'auto',
+            'sanitize_callback' => 'utehub2026_sanitize_dark_mode_default',
+        )
+    );
+
+    $wp_customize->add_control(
+        'utehub2026_dark_mode_default',
+        array(
+            'label'   => __( 'Default Mode', 'utehub2026' ),
+            'section' => 'utehub2026_dark_mode',
+            'type'    => 'select',
+            'choices' => array(
+                'auto'   => __( 'Follow system preference', 'utehub2026' ),
+                'light'  => __( 'Light mode', 'utehub2026' ),
+                'dark'   => __( 'Dark mode', 'utehub2026' ),
+            ),
+        )
+    );
 }
 
 function utehub2026_is_member_groups_tab_enabled() {
@@ -600,6 +632,23 @@ function utehub2026_sanitize_home_welcome_rotation( $value ) {
     $allowed = array( 'static', 'daily', 'random' );
 
     return in_array( $value, $allowed, true ) ? $value : 'daily';
+}
+
+function utehub2026_sanitize_dark_mode_default( $value ) {
+    $value   = sanitize_key( (string) $value );
+    $allowed = array( 'auto', 'light', 'dark' );
+
+    return in_array( $value, $allowed, true ) ? $value : 'auto';
+}
+
+function utehub2026_get_dark_mode_default() {
+    return get_theme_mod( 'utehub2026_dark_mode_default', 'auto' );
+}
+
+function utehub2026_dark_mode_inline_style() {
+    $default = utehub2026_get_dark_mode_default();
+    $storage_key = 'utehub2026-theme';
+    ?><script>(function(){var t=localStorage.getItem('<?php echo $storage_key; ?>');if(t==='dark'||t==='light'){document.documentElement.setAttribute("data-theme",t)}else if(!t&&<?php echo 'auto' === $default ? 'true' : 'false'; ?>&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.setAttribute("data-theme","dark")}document.documentElement.style.setProperty("--dm","<?php echo 'auto' === $default ? 'match' : 'override'; ?>")})();</script><?php
 }
 
 function utehub2026_get_home_welcome_messages() {
@@ -1042,6 +1091,10 @@ function utehub2026_render_primary_nav() {
     echo '<button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-menu">';
     echo '<span class="screen-reader-text">' . esc_html__( 'Toggle navigation', 'utehub2026' ) . '</span>';
     echo '<span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span><span></span></span>';
+    echo '</button>';
+    echo '<button class="theme-toggle" type="button" aria-label="Toggle dark mode">';
+    echo '<svg class="theme-icon-light" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+    echo '<svg class="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
     echo '</button>';
     echo '<ul class="links" id="primary-menu">';
 
@@ -1872,23 +1925,25 @@ function utehub2026_render_topics_feed( $base_url = '' ) {
                             ?>
                             <article <?php post_class( $classes, $topic_id ); ?>>
                                 <div class="t-main">
-                                    <div class="t-tags">
-                                        <?php if ( function_exists( 'bbp_is_topic_sticky' ) && ( bbp_is_topic_sticky( $topic_id ) || bbp_is_topic_super_sticky( $topic_id ) ) ) : ?>
-                                            <span class="chip pin"><?php echo utehub2026_get_svg( 'pin' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>Pinned</span>
-                                        <?php endif; ?>
-                                        <?php if ( $forum_title && $forum_url ) : ?>
-                                            <a class="chip cat" href="<?php echo esc_url( $forum_url ); ?>"><?php echo esc_html( $forum_title ); ?></a>
-                                        <?php endif; ?>
-                                        <?php if ( $heat ) : ?>
-                                            <span class="heat"><?php echo esc_html( str_repeat( '🔥', $heat ) ); ?></span>
-                                        <?php endif; ?>
-                                    </div>
                                     <a class="t-title" href="<?php echo esc_url( get_permalink( $topic_id ) ); ?>"><?php echo esc_html( get_the_title( $topic_id ) ); ?></a>
                                     <div class="t-by">
                                         <a href="<?php echo esc_url( $started_by_url ); ?>">
                                             <?php echo utehub2026_render_avatar( $started_by_id, 20, array( 'class' => 't-by-av', 'name' => get_the_author_meta( 'display_name', $started_by_id ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                                         </a>
-                                        Started by <a href="<?php echo esc_url( $started_by_url ); ?>"><?php echo esc_html( function_exists( 'bbp_get_topic_author_display_name' ) ? bbp_get_topic_author_display_name( $topic_id ) : get_the_author_meta( 'display_name', $started_by_id ) ); ?></a>
+                                        <span class="t-by-copy">
+                                            Started by <a href="<?php echo esc_url( $started_by_url ); ?>"><?php echo esc_html( function_exists( 'bbp_get_topic_author_display_name' ) ? bbp_get_topic_author_display_name( $topic_id ) : get_the_author_meta( 'display_name', $started_by_id ) ); ?></a>
+                                        </span>
+                                        <div class="t-tags">
+                                            <?php if ( function_exists( 'bbp_is_topic_sticky' ) && ( bbp_is_topic_sticky( $topic_id ) || bbp_is_topic_super_sticky( $topic_id ) ) ) : ?>
+                                                <span class="chip pin"><?php echo utehub2026_get_svg( 'pin' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>Pinned</span>
+                                            <?php endif; ?>
+                                            <?php if ( $forum_title && $forum_url ) : ?>
+                                                <a class="chip cat" href="<?php echo esc_url( $forum_url ); ?>"><?php echo esc_html( $forum_title ); ?></a>
+                                            <?php endif; ?>
+                                            <?php if ( $heat ) : ?>
+                                                <span class="heat"><?php echo esc_html( str_repeat( '🔥', $heat ) ); ?></span>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 </div>
 

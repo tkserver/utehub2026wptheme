@@ -241,3 +241,53 @@ document.addEventListener('DOMContentLoaded', function () {
 
   validateTopicForm(false);
 });
+
+document.addEventListener('DOMContentLoaded', function () {
+  var toggle = document.querySelector('.theme-toggle');
+  if (!toggle) {
+    return;
+  }
+
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+  var dmMatch = document.documentElement.style.getPropertyValue('--dm').trim() === 'match';
+  var STORAGE_KEY = 'utehub2026-theme';
+
+  function getCurrentTheme() {
+    return document.documentElement.getAttribute('data-theme') || (dmMatch && prefersDark.matches ? 'dark' : 'light');
+  }
+
+  function getStoredTheme() {
+    return localStorage.getItem(STORAGE_KEY);
+  }
+
+  function setStoredTheme(theme) {
+    try {
+      localStorage.setItem(STORAGE_KEY, theme);
+    } catch (_) {
+    }
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+
+  var initialTheme = getStoredTheme();
+  if (initialTheme) {
+    applyTheme(initialTheme);
+  } else if (dmMatch && prefersDark.matches) {
+    applyTheme('dark');
+  }
+
+  prefersDark.addEventListener('change', function () {
+    if (!getStoredTheme()) {
+      applyTheme(prefersDark.matches ? 'dark' : 'light');
+    }
+  });
+
+  toggle.addEventListener('click', function () {
+    var current = getCurrentTheme();
+    var next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    setStoredTheme(next);
+  });
+});

@@ -33,28 +33,30 @@ if ( bbp_is_topic_sticky( $topic_id ) || bbp_is_topic_super_sticky( $topic_id ) 
 
 <article id="bbp-topic-<?php bbp_topic_id(); ?>" <?php post_class( $classes, $topic_id ); ?>>
     <div class="t-main">
-        <div class="t-tags">
-            <?php if ( bbp_is_topic_sticky( $topic_id ) || bbp_is_topic_super_sticky( $topic_id ) ) : ?>
-                <span class="chip pin"><?php echo utehub2026_get_svg( 'pin' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>Pinned</span>
-            <?php endif; ?>
-
-            <?php if ( $forum_title && $forum_url && ( ! bbp_is_single_forum() || $topic_forum_id !== $current_forum_id ) ) : ?>
-                <a class="chip cat" href="<?php echo esc_url( $forum_url ); ?>"><?php echo esc_html( $forum_title ); ?></a>
-            <?php endif; ?>
-
-            <?php if ( $heat ) : ?>
-                <span class="heat"><?php echo esc_html( str_repeat( '🔥', $heat ) ); ?></span>
-            <?php endif; ?>
-        </div>
-
         <a class="t-title" href="<?php echo esc_url( bbp_get_topic_permalink( $topic_id ) ); ?>"><?php bbp_topic_title( $topic_id ); ?></a>
 
         <div class="t-by">
             <a href="<?php echo esc_url( $started_by_url ); ?>">
                 <?php echo utehub2026_render_avatar( $started_by_id, 20, array( 'class' => 't-by-av', 'name' => bbp_get_topic_author_display_name( $topic_id ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
             </a>
-            Started by
-            <a href="<?php echo esc_url( $started_by_url ); ?>"><?php echo esc_html( bbp_get_topic_author_display_name( $topic_id ) ); ?></a>
+            <span class="t-by-copy">
+                Started by
+                <a href="<?php echo esc_url( $started_by_url ); ?>"><?php echo esc_html( bbp_get_topic_author_display_name( $topic_id ) ); ?></a>
+            </span>
+
+            <div class="t-tags">
+                <?php if ( bbp_is_topic_sticky( $topic_id ) || bbp_is_topic_super_sticky( $topic_id ) ) : ?>
+                    <span class="chip pin"><?php echo utehub2026_get_svg( 'pin' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>Pinned</span>
+                <?php endif; ?>
+
+                <?php if ( $forum_title && $forum_url && ( ! bbp_is_single_forum() || $topic_forum_id !== $current_forum_id ) ) : ?>
+                    <a class="chip cat" href="<?php echo esc_url( $forum_url ); ?>"><?php echo esc_html( $forum_title ); ?></a>
+                <?php endif; ?>
+
+                <?php if ( $heat ) : ?>
+                    <span class="heat"><?php echo esc_html( str_repeat( '🔥', $heat ) ); ?></span>
+                <?php endif; ?>
+            </div>
         </div>
 
         <?php if ( bbp_get_topic_pagination() ) : ?>
