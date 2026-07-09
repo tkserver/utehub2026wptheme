@@ -9,6 +9,15 @@ A custom WordPress theme for the Ute Hub community platform, integrating bbPress
 - **Version:** 1.0.0
 - **Dependencies:** WordPress, bbPress, BuddyPress
 
+## Documentation Index
+
+- [Architecture](./architecture.md)
+- [Functions Reference](./functions-reference.md)
+- [JavaScript](./javascript.md)
+- [Plugin Theming Guide](./plugin-theming.md)
+- [Styling Guide](./styling.md)
+- [Templates](./templates.md)
+
 ## Architecture
 
 ### File Structure

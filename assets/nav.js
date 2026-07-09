@@ -244,16 +244,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
 document.addEventListener('DOMContentLoaded', function () {
   var toggle = document.querySelector('.theme-toggle');
-  if (!toggle) {
-    return;
-  }
-
   var prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
   var dmMatch = document.documentElement.style.getPropertyValue('--dm').trim() === 'match';
-  var STORAGE_KEY = 'utehub2026-theme';
+  var config = window.UteHubThemeConfig || {};
+  var STORAGE_KEY = config.storageKey || 'utehub2026-theme';
+  var EVENT_NAME = config.eventName || 'utehub:themechange';
+  var BODY_CLASS_PREFIX = config.bodyClassPrefix || 'theme-';
+  var BODY_THEME_ATTRIBUTE = config.bodyThemeAttribute || 'data-theme';
+  var ROOT_THEME_ATTRIBUTE = config.rootThemeAttribute || 'data-theme';
 
   function getCurrentTheme() {
-    return document.documentElement.getAttribute('data-theme') || (dmMatch && prefersDark.matches ? 'dark' : 'light');
+    return document.documentElement.getAttribute(ROOT_THEME_ATTRIBUTE) || (dmMatch && prefersDark.matches ? 'dark' : 'light');
   }
 
   function getStoredTheme() {
@@ -267,8 +268,35 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  function syncThemeContract(theme) {
+    var body = document.body;
+
+    document.documentElement.setAttribute(ROOT_THEME_ATTRIBUTE, theme);
+
+    if (body) {
+      body.setAttribute(BODY_THEME_ATTRIBUTE, theme);
+      body.classList.remove(BODY_CLASS_PREFIX + 'light', BODY_CLASS_PREFIX + 'dark');
+      body.classList.add(BODY_CLASS_PREFIX + theme);
+    }
+
+    window.UteHubTheme = window.UteHubTheme || {};
+    window.UteHubTheme.current = theme;
+    window.UteHubTheme.getCurrentTheme = getCurrentTheme;
+
+    window.dispatchEvent(new CustomEvent(EVENT_NAME, {
+      detail: {
+        theme: theme
+      }
+    }));
+  }
+
   function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
+    syncThemeContract(theme);
+
+    if (toggle) {
+      toggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+      toggle.setAttribute('title', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+    }
   }
 
   var initialTheme = getStoredTheme();
@@ -283,6 +311,10 @@ document.addEventListener('DOMContentLoaded', function () {
       applyTheme(prefersDark.matches ? 'dark' : 'light');
     }
   });
+
+  if (!toggle) {
+    return;
+  }
 
   toggle.addEventListener('click', function () {
     var current = getCurrentTheme();
