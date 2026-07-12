@@ -106,6 +106,7 @@ function utehub2026_enqueue_assets() {
             'bodyClassPrefix' => 'theme-',
             'bodyThemeAttribute' => 'data-theme',
             'rootThemeAttribute' => 'data-theme',
+            'defaultMode' => utehub2026_get_dark_mode_default(),
         )
     );
 
@@ -560,6 +561,50 @@ function utehub2026_customize_register( $wp_customize ) {
         );
     }
 
+    $wp_customize->add_setting(
+        'utehub2026_hot_topics_window_days',
+        array(
+            'default'           => 180,
+            'sanitize_callback' => 'utehub2026_sanitize_hot_topics_window_days',
+        )
+    );
+
+    $wp_customize->add_control(
+        'utehub2026_hot_topics_window_days',
+        array(
+            'label'       => __( 'Hot Topics Activity Window (Days)', 'utehub2026' ),
+            'description' => __( 'Only include topics with activity in the last N days. Set to 0 to allow all-time topics.', 'utehub2026' ),
+            'section'     => 'utehub2026_home_feed',
+            'type'        => 'number',
+            'input_attrs' => array(
+                'min'  => 0,
+                'step' => 1,
+            ),
+        )
+    );
+
+    $wp_customize->add_setting(
+        'utehub2026_hot_topics_min_replies',
+        array(
+            'default'           => 1,
+            'sanitize_callback' => 'utehub2026_sanitize_hot_topics_min_replies',
+        )
+    );
+
+    $wp_customize->add_control(
+        'utehub2026_hot_topics_min_replies',
+        array(
+            'label'       => __( 'Hot Topics Minimum Replies', 'utehub2026' ),
+            'description' => __( 'Topics must have at least this many replies before they can appear in the Hot pill.', 'utehub2026' ),
+            'section'     => 'utehub2026_home_feed',
+            'type'        => 'number',
+            'input_attrs' => array(
+                'min'  => 1,
+                'step' => 1,
+            ),
+        )
+    );
+
     $wp_customize->add_section(
         'utehub2026_forum_features',
         array(
@@ -598,7 +643,7 @@ function utehub2026_customize_register( $wp_customize ) {
     $wp_customize->add_setting(
         'utehub2026_dark_mode_default',
         array(
-            'default'           => 'auto',
+            'default'           => 'light',
             'sanitize_callback' => 'utehub2026_sanitize_dark_mode_default',
         )
     );
@@ -658,17 +703,17 @@ function utehub2026_sanitize_dark_mode_default( $value ) {
     $value   = sanitize_key( (string) $value );
     $allowed = array( 'auto', 'light', 'dark' );
 
-    return in_array( $value, $allowed, true ) ? $value : 'auto';
+    return in_array( $value, $allowed, true ) ? $value : 'light';
 }
 
 function utehub2026_get_dark_mode_default() {
-    return get_theme_mod( 'utehub2026_dark_mode_default', 'auto' );
+    return get_theme_mod( 'utehub2026_dark_mode_default', 'light' );
 }
 
 function utehub2026_dark_mode_inline_style() {
     $default = utehub2026_get_dark_mode_default();
     $storage_key = 'utehub2026-theme';
-    ?><script>(function(){var t=localStorage.getItem('<?php echo $storage_key; ?>');if(t==='dark'||t==='light'){document.documentElement.setAttribute("data-theme",t)}else if(!t&&<?php echo 'auto' === $default ? 'true' : 'false'; ?>&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.setAttribute("data-theme","dark")}document.documentElement.style.setProperty("--dm","<?php echo 'auto' === $default ? 'match' : 'override'; ?>")})();</script><?php
+    ?><script>(function(){var d='<?php echo esc_js( $default ); ?>',t=null,m=false;try{t=localStorage.getItem('<?php echo esc_js( $storage_key ); ?>')}catch(e){}try{m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}if(t!=='dark'&&t!=='light'){t='auto'===d?(m?'dark':'light'):d}document.documentElement.setAttribute('data-theme',t);document.documentElement.style.setProperty('--dm','auto'===d?'match':'override');document.documentElement.style.setProperty('--dm-default',d)})();</script><?php
 }
 
 function utehub2026_get_home_welcome_messages() {
@@ -1537,6 +1582,34 @@ function utehub2026_get_home_feed_forum_ids() {
     return array_slice( $selected_ids, 0, 3 );
 }
 
+function utehub2026_sanitize_hot_topics_window_days( $value ) {
+    return max( 0, absint( $value ) );
+}
+
+function utehub2026_sanitize_hot_topics_min_replies( $value ) {
+    return max( 1, absint( $value ) );
+}
+
+function utehub2026_get_hot_topics_window_days() {
+    return utehub2026_sanitize_hot_topics_window_days( get_theme_mod( 'utehub2026_hot_topics_window_days', 180 ) );
+}
+
+function utehub2026_get_hot_topics_min_replies() {
+    return utehub2026_sanitize_hot_topics_min_replies( get_theme_mod( 'utehub2026_hot_topics_min_replies', 1 ) );
+}
+
+function utehub2026_get_hot_topics_last_active_cutoff() {
+    $window_days = utehub2026_get_hot_topics_window_days();
+
+    if ( $window_days <= 0 ) {
+        return '';
+    }
+
+    $cutoff_timestamp = current_time( 'timestamp' ) - ( DAY_IN_SECONDS * $window_days );
+
+    return wp_date( 'Y-m-d H:i:s', $cutoff_timestamp, wp_timezone() );
+}
+
 function utehub2026_get_recent_topics_tabs( $base_url = '' ) {
     if ( ! function_exists( 'bbp_get_forum_post_type' ) ) {
         return array();
@@ -1628,18 +1701,31 @@ function utehub2026_get_recent_topics_query_args( $paged = 1 ) {
     }
 
     if ( 'hot' === $tab_key ) {
-        $args['meta_key'] = '_bbp_reply_count';
-        $args['orderby']  = array(
-            'meta_value_num' => 'DESC',
-            'date'           => 'DESC',
+        $cutoff      = utehub2026_get_hot_topics_last_active_cutoff();
+        $min_replies = utehub2026_get_hot_topics_min_replies();
+        $last_active = array(
+            'key'     => '_bbp_last_active_time',
+            'compare' => 'EXISTS',
+            'type'    => 'DATETIME',
+        );
+
+        if ( $cutoff ) {
+            $last_active['compare'] = '>=';
+            $last_active['value']   = $cutoff;
+        }
+
+        $args['orderby'] = array(
+            'hot_reply_count' => 'DESC',
+            'hot_last_active' => 'DESC',
         );
         $args['meta_query'] = array(
-            array(
+            'hot_reply_count' => array(
                 'key'     => '_bbp_reply_count',
-                'value'   => 1,
+                'value'   => $min_replies,
                 'compare' => '>=',
                 'type'    => 'NUMERIC',
             ),
+            'hot_last_active' => $last_active,
         );
 
         return $args;
@@ -1955,9 +2041,9 @@ function utehub2026_render_topics_feed( $base_url = '' ) {
                             $started_by_url = function_exists( 'bbp_get_topic_author_url' ) ? bbp_get_topic_author_url( $topic_id ) : get_author_posts_url( $started_by_id );
                             $last_user_id   = $last_author_id ? $last_author_id : $started_by_id;
                             $last_user_name = get_the_author_meta( 'display_name', $last_user_id );
-                            $last_user_url  = $last_active_id && $last_active_id !== $topic_id && function_exists( 'bbp_get_reply_author_url' )
-                                ? bbp_get_reply_author_url( $last_active_id )
-                                : $started_by_url;
+                            $last_activity_url = $last_active_id && $last_active_id !== $topic_id && function_exists( 'bbp_get_reply_url' )
+                                ? bbp_get_reply_url( $last_active_id )
+                                : get_permalink( $topic_id );
                             $heat           = utehub2026_get_topic_heat( max( 0, $reply_count - 1 ) );
                             $classes        = 'uh-topic';
 
@@ -1994,15 +2080,15 @@ function utehub2026_render_topics_feed( $base_url = '' ) {
                                     <div class="stat"><b><?php echo esc_html( $reply_count ); ?></b><span>Posts</span></div>
                                 </div>
 
-                                <div class="t-last">
-                                    <a href="<?php echo esc_url( $last_user_url ); ?>">
+                                <a class="t-last" href="<?php echo esc_url( $last_activity_url ); ?>">
+                                    <span>
                                         <?php echo utehub2026_render_avatar( $last_user_id, 38, array( 'name' => $last_user_name ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-                                    </a>
+                                    </span>
                                     <div class="lp">
-                                        <a class="who" href="<?php echo esc_url( $last_user_url ); ?>"><?php echo esc_html( $last_user_name ); ?></a>
+                                        <span class="who"><?php echo esc_html( $last_user_name ); ?></span>
                                         <span class="when"><?php echo utehub2026_get_svg( 'clock' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php echo esc_html( utehub2026_get_relative_time( $last_active_id ) ); ?></span>
                                     </div>
-                                </div>
+                                </a>
                             </article>
                         <?php endwhile; ?>
                     </div>
@@ -2041,12 +2127,16 @@ function utehub2026_get_reply_depth( $reply_id ) {
     return $depth;
 }
 
-function utehub2026_get_reply_parent_author_name( $reply_id ) {
+function utehub2026_get_reply_parent_id( $reply_id ) {
     if ( ! function_exists( 'bbp_get_reply_to' ) ) {
-        return '';
+        return 0;
     }
 
-    $parent_id = (int) bbp_get_reply_to( $reply_id );
+    return (int) bbp_get_reply_to( $reply_id );
+}
+
+function utehub2026_get_reply_parent_author_name( $reply_id ) {
+    $parent_id = utehub2026_get_reply_parent_id( $reply_id );
     if ( ! $parent_id ) {
         return '';
     }

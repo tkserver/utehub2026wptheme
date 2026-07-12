@@ -13,7 +13,7 @@ $post_num   = '#' . $topic_id;
 $admin_html = utehub2026_get_topic_admin_links_html();
 ?>
 <div class="posts">
-    <div class="post-wrap">
+    <div id="post-<?php echo esc_attr( $topic_id ); ?>" class="post-wrap">
         <article class="post op">
             <div class="post-top">
                 <div class="ts">

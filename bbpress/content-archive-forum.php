@@ -77,15 +77,15 @@ $sections = utehub2026_get_forum_archive_sections();
                                     </div>
                                 </div>
 
-                                <div class="forum-card-last">
+                                <a class="forum-card-last" href="<?php echo esc_url( $card['last_url'] ); ?>">
                                     <?php if ( $card['last_author_id'] ) : ?>
                                         <?php echo utehub2026_render_avatar( $card['last_author_id'], 40, array( 'name' => $card['last_author'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                                         <div class="forum-card-last-meta">
-                                            <a href="<?php echo esc_url( $card['last_url'] ); ?>"><?php echo esc_html( $card['last_author'] ); ?></a>
+                                            <span><?php echo esc_html( $card['last_author'] ); ?></span>
                                             <span><?php echo utehub2026_get_svg( 'clock' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php echo esc_html( $card['last_when'] ); ?></span>
                                         </div>
                                     <?php endif; ?>
-                                </div>
+                                </a>
                             </article>
                         <?php endforeach; ?>
                     </div>

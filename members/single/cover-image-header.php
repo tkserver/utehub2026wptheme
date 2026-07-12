@@ -22,7 +22,7 @@ if ( function_exists( 'bp_attachments_get_attachment' ) ) {
 do_action( 'bp_before_member_header' );
 ?>
 
-<div id="cover-image-container">
+<div id="cover-image-container" class="<?php echo $cover_image ? 'has-cover-image' : 'no-cover-image'; ?>">
     <a
         id="header-cover-image"
         href="<?php bp_displayed_user_link(); ?>"

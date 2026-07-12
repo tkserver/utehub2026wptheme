@@ -10,6 +10,7 @@ defined( 'ABSPATH' ) || exit;
 $reply_id      = bbp_get_reply_id();
 $author_id     = (int) bbp_get_reply_author_id( $reply_id );
 $depth         = utehub2026_get_reply_depth( $reply_id );
+$parent_id     = utehub2026_get_reply_parent_id( $reply_id );
 $parent_author = utehub2026_get_reply_parent_author_name( $reply_id );
 $wrap_class    = 'post-wrap';
 $admin_html    = utehub2026_get_reply_admin_links_html();
@@ -22,7 +23,7 @@ if ( $depth > 0 ) {
     }
 }
 ?>
-<div class="<?php echo esc_attr( $wrap_class ); ?>">
+<div id="post-<?php echo esc_attr( $reply_id ); ?>" class="<?php echo esc_attr( $wrap_class ); ?>">
     <article class="post">
         <div class="post-top">
             <div class="ts">
@@ -47,7 +48,7 @@ if ( $depth > 0 ) {
         </div>
         <div class="pbody">
             <?php if ( $parent_author ) : ?>
-                <div class="replyto"><?php echo utehub2026_get_svg( 'reply' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>In reply to <a href="#reply-<?php echo esc_attr( $reply_id ); ?>"><?php echo esc_html( $parent_author ); ?></a></div>
+                <div class="replyto"><?php echo utehub2026_get_svg( 'reply' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>In reply to <a href="#post-<?php echo esc_attr( $parent_id ); ?>"><?php echo esc_html( $parent_author ); ?></a></div>
             <?php endif; ?>
             <?php bbp_reply_content(); ?>
             <a class="reply-link" href="#new-reply-<?php echo esc_attr( bbp_get_topic_id() ); ?>"<?php echo is_user_logged_in() ? '' : ' data-login-required="1"'; ?>><?php echo utehub2026_get_svg( 'reply' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>Reply</a>

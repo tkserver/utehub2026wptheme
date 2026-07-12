@@ -20,9 +20,9 @@ $forum_url        = $topic_forum_id ? bbp_get_forum_permalink( $topic_forum_id )
 $started_by_url   = bbp_get_topic_author_url( $topic_id );
 $last_user_id     = $last_author_id ? $last_author_id : $started_by_id;
 $last_author_name = get_the_author_meta( 'display_name', $last_user_id );
-$last_author_url  = $last_active_id && $last_active_id !== $topic_id && function_exists( 'bbp_get_reply_author_url' )
-    ? bbp_get_reply_author_url( $last_active_id )
-    : $started_by_url;
+$last_activity_url = $last_active_id && $last_active_id !== $topic_id && function_exists( 'bbp_get_reply_url' )
+    ? bbp_get_reply_url( $last_active_id )
+    : bbp_get_topic_permalink( $topic_id );
 $classes          = 'uh-topic';
 $heat             = utehub2026_get_topic_heat( max( 0, $reply_count - 1 ) );
 
@@ -69,13 +69,13 @@ if ( bbp_is_topic_sticky( $topic_id ) || bbp_is_topic_super_sticky( $topic_id ) 
         <div class="stat"><b><?php echo esc_html( $reply_count ); ?></b><span>Posts</span></div>
     </div>
 
-    <div class="t-last">
-        <a href="<?php echo esc_url( $last_author_url ); ?>">
+    <a class="t-last" href="<?php echo esc_url( $last_activity_url ); ?>">
+        <span>
             <?php echo utehub2026_render_avatar( $last_user_id, 38, array( 'name' => $last_author_name ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-        </a>
+        </span>
         <div class="lp">
-            <a class="who" href="<?php echo esc_url( $last_author_url ); ?>"><?php echo esc_html( $last_author_name ); ?></a>
+            <span class="who"><?php echo esc_html( $last_author_name ); ?></span>
             <span class="when"><?php echo utehub2026_get_svg( 'clock' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php echo esc_html( utehub2026_get_relative_time( $last_active_id ) ); ?></span>
         </div>
-    </div>
+    </a>
 </article>

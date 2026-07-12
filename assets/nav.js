@@ -245,20 +245,36 @@ document.addEventListener('DOMContentLoaded', function () {
 document.addEventListener('DOMContentLoaded', function () {
   var toggle = document.querySelector('.theme-toggle');
   var prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-  var dmMatch = document.documentElement.style.getPropertyValue('--dm').trim() === 'match';
   var config = window.UteHubThemeConfig || {};
   var STORAGE_KEY = config.storageKey || 'utehub2026-theme';
   var EVENT_NAME = config.eventName || 'utehub:themechange';
   var BODY_CLASS_PREFIX = config.bodyClassPrefix || 'theme-';
   var BODY_THEME_ATTRIBUTE = config.bodyThemeAttribute || 'data-theme';
   var ROOT_THEME_ATTRIBUTE = config.rootThemeAttribute || 'data-theme';
+  var DEFAULT_MODE = config.defaultMode || 'light';
+
+  function resolveDefaultTheme() {
+    if (DEFAULT_MODE === 'dark') {
+      return 'dark';
+    }
+
+    if (DEFAULT_MODE === 'auto') {
+      return prefersDark.matches ? 'dark' : 'light';
+    }
+
+    return 'light';
+  }
 
   function getCurrentTheme() {
-    return document.documentElement.getAttribute(ROOT_THEME_ATTRIBUTE) || (dmMatch && prefersDark.matches ? 'dark' : 'light');
+    return document.documentElement.getAttribute(ROOT_THEME_ATTRIBUTE) || resolveDefaultTheme();
   }
 
   function getStoredTheme() {
-    return localStorage.getItem(STORAGE_KEY);
+    try {
+      return localStorage.getItem(STORAGE_KEY);
+    } catch (_) {
+      return null;
+    }
   }
 
   function setStoredTheme(theme) {
@@ -300,15 +316,15 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   var initialTheme = getStoredTheme();
-  if (initialTheme) {
+  if (initialTheme === 'dark' || initialTheme === 'light') {
     applyTheme(initialTheme);
-  } else if (dmMatch && prefersDark.matches) {
-    applyTheme('dark');
+  } else {
+    applyTheme(resolveDefaultTheme());
   }
 
   prefersDark.addEventListener('change', function () {
-    if (!getStoredTheme()) {
-      applyTheme(prefersDark.matches ? 'dark' : 'light');
+    if (!getStoredTheme() && DEFAULT_MODE === 'auto') {
+      applyTheme(resolveDefaultTheme());
     }
   });
 
