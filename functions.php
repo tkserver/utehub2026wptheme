@@ -1082,10 +1082,6 @@ function utehub2026_render_nav_item( $item, $depth = 0 ) {
 
     echo '<span>' . esc_html( $item['label'] ) . '</span>';
 
-    if ( 0 === $depth && $has_children ) {
-        echo '<span class="submenu-indicator">' . utehub2026_get_svg( 'chevron' ) . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-    }
-
     echo '</a>';
 
     if ( 0 === $depth && $has_children ) {
@@ -1347,7 +1343,7 @@ function utehub2026_get_relative_time( $post_id ) {
         return '';
     }
 
-    return human_time_diff( $timestamp, current_time( 'timestamp' ) ) . ' ago';
+    return human_time_diff( $timestamp, current_time( 'timestamp', true ) ) . ' ago';
 }
 
 function utehub2026_get_topic_heat( $reply_count ) {

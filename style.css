@@ -1585,6 +1585,57 @@ a:hover {
   padding: 22px 26px;
 }
 
+#bbpress-forums .post .pbody ul,
+#bbpress-forums .post .pbody ol {
+  margin: 0 0 16px;
+  margin-left: 0;
+  padding-left: 28px !important;
+  color: #26262c;
+  font-size: 15.5px;
+  line-height: 1.7;
+  list-style-position: outside !important;
+}
+
+#bbpress-forums .post .pbody ul {
+  list-style-type: disc !important;
+}
+
+#bbpress-forums .post .pbody ol {
+  list-style-type: decimal !important;
+}
+
+#bbpress-forums .post .pbody ul ul {
+  list-style-type: circle !important;
+}
+
+#bbpress-forums .post .pbody ul ul ul {
+  list-style-type: square !important;
+}
+
+#bbpress-forums .post .pbody ol ol {
+  list-style-type: lower-alpha !important;
+}
+
+#bbpress-forums .post .pbody ol ol ol {
+  list-style-type: lower-roman !important;
+}
+
+#bbpress-forums .post .pbody li {
+  display: list-item;
+  margin: 0 0 8px;
+  list-style: inherit !important;
+}
+
+#bbpress-forums .post .pbody li > ul,
+#bbpress-forums .post .pbody li > ol {
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+#bbpress-forums .post .pbody li::marker {
+  color: var(--crimson);
+}
+
 .pbody p {
   margin: 0 0 12px;
   color: #26262c;
@@ -1593,6 +1644,12 @@ a:hover {
 }
 
 [data-theme="dark"] .pbody p {
+  color: #9a9aa2;
+}
+
+[data-theme="dark"] #bbpress-forums .post .pbody ul,
+[data-theme="dark"] #bbpress-forums .post .pbody ol,
+[data-theme="dark"] #bbpress-forums .post .pbody li {
   color: #9a9aa2;
 }
 
@@ -3438,13 +3495,23 @@ a:hover {
   padding-bottom: 8px;
 }
 
-.member-single-shell .user-nicename {
-  margin: 0 0 8px;
+.member-single-shell .member-display-name {
+  margin: 0;
   color: var(--ink);
   font-family: var(--font-display);
-  font-size: 34px;
-  line-height: 1;
+  font-size: 44px;
+  line-height: 0.96;
   letter-spacing: 0.3px;
+}
+
+.member-single-shell .user-nicename {
+  margin: 8px 0 0;
+  color: var(--meta);
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.2;
+  letter-spacing: 0.8px;
+  text-transform: none;
 }
 
 .member-single-shell #item-header-content > .activity,
@@ -4020,12 +4087,14 @@ a:hover {
   font-size: 12px;
 }
 
+.members-tabs li.current a,
 .members-tabs li.selected a {
   background: var(--crimson);
   border-color: var(--crimson);
   color: #fff;
 }
 
+.members-tabs li.current a span,
 .members-tabs li.selected a span {
   background: rgba(255,255,255,0.18);
   color: #fff;
@@ -4109,6 +4178,7 @@ a:hover {
   background: #fff4f4;
 }
 
+#buddypress.members-directory-shell .members-pager .pagination-links .current,
 #buddypress.members-directory-shell .members-pager .pagination-links .page-numbers.current {
   background: var(--ink);
   border-color: var(--ink);
@@ -4816,8 +4886,12 @@ a:hover {
     border-radius: 20px;
   }
 
+  .member-single-shell .member-display-name {
+    font-size: 34px;
+  }
+
   .member-single-shell .user-nicename {
-    font-size: 28px;
+    font-size: 15px;
   }
 
   .member-single-shell #object-nav ul,
@@ -5492,8 +5566,8 @@ a:hover {
 
 [data-theme="dark"] .nav-link:hover,
 [data-theme="light"] .nav-link:hover {
-  color: var(--ink);
-  background: rgba(0, 0, 0, 0.04);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 [data-theme="dark"] .prose-card p,
@@ -5971,6 +6045,23 @@ a:hover {
   background: var(--card);
 }
 
+[data-theme="dark"] .members-tabs li.current a,
+[data-theme="dark"] .members-tabs li.selected a,
+[data-theme="light"] .members-tabs li.current a,
+[data-theme="light"] .members-tabs li.selected a {
+  background: var(--crimson);
+  border-color: var(--crimson);
+  color: #fff;
+}
+
+[data-theme="dark"] .members-tabs li.current a span,
+[data-theme="dark"] .members-tabs li.selected a span,
+[data-theme="light"] .members-tabs li.current a span,
+[data-theme="light"] .members-tabs li.selected a span {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
 [data-theme="dark"] .members-subnav select,
 [data-theme="light"] .members-subnav select {
   background: var(--card);
@@ -5979,6 +6070,15 @@ a:hover {
 [data-theme="dark"] #buddypress.members-directory-shell .members-pager .pagination-links .page-numbers,
 [data-theme="light"] #buddypress.members-directory-shell .members-pager .pagination-links .page-numbers {
   background: var(--card);
+}
+
+[data-theme="dark"] #buddypress.members-directory-shell .members-pager .pagination-links .current,
+[data-theme="dark"] #buddypress.members-directory-shell .members-pager .pagination-links .page-numbers.current,
+[data-theme="light"] #buddypress.members-directory-shell .members-pager .pagination-links .current,
+[data-theme="light"] #buddypress.members-directory-shell .members-pager .pagination-links .page-numbers.current {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
 }
 
 [data-theme="dark"] .member-card-action .generic-button a,

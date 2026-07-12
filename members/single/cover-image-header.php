@@ -40,8 +40,10 @@ do_action( 'bp_before_member_header' );
         </div>
 
         <div id="item-header-content">
+            <h1 class="member-display-name"><?php bp_displayed_user_fullname(); ?></h1>
+
             <?php if ( bp_is_active( 'activity' ) && bp_activity_do_mentions() ) : ?>
-                <h2 class="user-nicename">@<?php bp_displayed_user_mentionname(); ?></h2>
+                <div class="user-nicename">@<?php bp_displayed_user_mentionname(); ?></div>
             <?php endif; ?>
 
             <div id="item-buttons"><?php do_action( 'bp_member_header_actions' ); ?></div>

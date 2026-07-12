@@ -16,13 +16,19 @@ if ( bbp_current_user_can_access_create_reply_form() ) : ?>
                 <?php do_action( 'bbp_template_notices' ); ?>
                 <?php bbp_get_template_part( 'form', 'anonymous' ); ?>
                 <?php
+                $uh_reply_placeholder = __( 'Jump into the conversation&hellip;', 'bbpress' );
+                $uh_reply_editor      = static function ( $html ) use ( $uh_reply_placeholder ) {
+                    return str_replace( '<textarea', '<textarea placeholder="' . esc_attr( $uh_reply_placeholder ) . '"', $html );
+                };
+                add_filter( 'the_editor', $uh_reply_editor );
                 bbp_the_content(
                     array(
                         'context'       => 'reply',
                         'textarea_rows' => 8,
-                        'tinymce'       => false,
+                        'tinymce'       => true,
                     )
                 );
+                remove_filter( 'the_editor', $uh_reply_editor );
                 ?>
 
                 <?php if ( bbp_is_subscriptions_active() && ! bbp_is_anonymous() ) : ?>
