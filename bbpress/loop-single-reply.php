@@ -14,12 +14,26 @@ $parent_id     = utehub2026_get_reply_parent_id( $reply_id );
 $parent_author = utehub2026_get_reply_parent_author_name( $reply_id );
 $wrap_class    = 'post-wrap';
 $admin_html    = utehub2026_get_reply_admin_links_html();
+$reply_link    = '';
 
 if ( $depth > 0 ) {
     $wrap_class .= ' nest-' . min( 4, $depth );
 
     if ( utehub2026_is_reply_branch_end( $reply_id ) ) {
         $wrap_class .= ' branch-end';
+    }
+}
+
+if ( is_user_logged_in() && function_exists( 'bbp_get_reply_to_link' ) ) {
+    $reply_link = bbp_get_reply_to_link(
+        array(
+            'id'         => $reply_id,
+            'reply_text' => utehub2026_get_svg( 'reply' ) . 'Reply',
+        )
+    );
+
+    if ( $reply_link ) {
+        $reply_link = str_replace( 'class="bbp-reply-to-link"', 'class="bbp-reply-to-link reply-link"', $reply_link );
     }
 }
 ?>
@@ -51,7 +65,11 @@ if ( $depth > 0 ) {
                 <div class="replyto"><?php echo utehub2026_get_svg( 'reply' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>In reply to <a href="#post-<?php echo esc_attr( $parent_id ); ?>"><?php echo esc_html( $parent_author ); ?></a></div>
             <?php endif; ?>
             <?php bbp_reply_content(); ?>
-            <a class="reply-link" href="#new-reply-<?php echo esc_attr( bbp_get_topic_id() ); ?>"<?php echo is_user_logged_in() ? '' : ' data-login-required="1"'; ?>><?php echo utehub2026_get_svg( 'reply' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>Reply</a>
+            <?php if ( $reply_link ) : ?>
+                <?php echo $reply_link; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+            <?php else : ?>
+                <a class="reply-link" href="#new-reply-<?php echo esc_attr( bbp_get_topic_id() ); ?>"<?php echo is_user_logged_in() ? '' : ' data-login-required="1"'; ?>><?php echo utehub2026_get_svg( 'reply' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>Reply</a>
+            <?php endif; ?>
         </div>
     </article>
 </div>

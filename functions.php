@@ -1677,17 +1677,89 @@ function utehub2026_get_current_recent_topics_tab() {
     return 'all';
 }
 
+function utehub2026_get_recent_topics_promoted_groups( $query_args = array() ) {
+    $super_stickies = function_exists( 'bbp_get_super_stickies' )
+        ? array_filter( array_map( 'intval', (array) bbp_get_super_stickies() ) )
+        : array();
+    $forum_stickies = array();
+    $forum_ids      = array();
+
+    if ( ! empty( $query_args['post_parent__in'] ) ) {
+        $forum_ids = array_filter( array_map( 'intval', (array) $query_args['post_parent__in'] ) );
+    } elseif ( ! empty( $query_args['post_parent'] ) ) {
+        $forum_ids = array( (int) $query_args['post_parent'] );
+    }
+
+    if ( ! empty( $forum_ids ) && function_exists( 'bbp_get_stickies' ) ) {
+        foreach ( $forum_ids as $forum_id ) {
+            $forum_stickies = array_merge( $forum_stickies, (array) bbp_get_stickies( $forum_id ) );
+        }
+    }
+
+    $forum_stickies = array_values( array_diff( array_filter( array_map( 'intval', $forum_stickies ) ), $super_stickies ) );
+
+    return array(
+        'super'   => array_values( $super_stickies ),
+        'forum'   => array_values( array_unique( $forum_stickies ) ),
+        'ordered' => array_values( array_unique( array_merge( $super_stickies, $forum_stickies ) ) ),
+    );
+}
+
+function utehub2026_get_recent_topics_promoted_posts( $query_args = array() ) {
+    $groups      = utehub2026_get_recent_topics_promoted_groups( $query_args );
+    $promoted_ids = $groups['ordered'];
+
+    if ( empty( $promoted_ids ) ) {
+        return array();
+    }
+
+    $topic_type = function_exists( 'bbp_get_topic_post_type' ) ? bbp_get_topic_post_type() : 'topic';
+    $status     = function_exists( 'bbp_get_public_status_id' ) ? bbp_get_public_status_id() : 'publish';
+    $posts      = get_posts(
+        array(
+            'post_type'      => $topic_type,
+            'post_status'    => $status,
+            'posts_per_page' => -1,
+            'include'        => $promoted_ids,
+            'meta_key'       => '_bbp_last_active_time',
+            'meta_type'      => 'DATETIME',
+            'orderby'        => 'meta_value',
+            'order'          => 'DESC',
+        )
+    );
+
+    if ( empty( $posts ) ) {
+        return array();
+    }
+
+    $ordered = array(
+        'super' => array(),
+        'forum' => array(),
+    );
+
+    foreach ( $posts as $post ) {
+        if ( in_array( (int) $post->ID, $groups['super'], true ) ) {
+            $ordered['super'][] = $post;
+        } elseif ( in_array( (int) $post->ID, $groups['forum'], true ) ) {
+            $ordered['forum'][] = $post;
+        }
+    }
+
+    return array_merge( $ordered['super'], $ordered['forum'] );
+}
+
 function utehub2026_get_recent_topics_query_args( $paged = 1 ) {
     $paged      = max( 1, (int) $paged );
     $search     = isset( $_GET['bbp_search'] ) ? sanitize_text_field( wp_unslash( $_GET['bbp_search'] ) ) : '';
     $tab_key    = utehub2026_get_current_recent_topics_tab();
     $topic_type = function_exists( 'bbp_get_topic_post_type' ) ? bbp_get_topic_post_type() : 'topic';
     $status     = function_exists( 'bbp_get_public_status_id' ) ? bbp_get_public_status_id() : 'publish';
+    $posts_per_page = max( 1, (int) get_option( 'posts_per_page', 10 ) );
 
     $args = array(
         'post_type'           => $topic_type,
         'post_status'         => $status,
-        'posts_per_page'      => 8,
+        'posts_per_page'      => $posts_per_page,
         'paged'               => $paged,
         'ignore_sticky_posts' => false,
         'orderby'             => array(
@@ -1727,21 +1799,41 @@ function utehub2026_get_recent_topics_query_args( $paged = 1 ) {
             ),
             'hot_last_active' => $last_active,
         );
+    } else {
+        foreach ( utehub2026_get_recent_topics_tabs() as $tab ) {
+            if ( empty( $tab['forum'] ) || $tab_key !== $tab['key'] ) {
+                continue;
+            }
 
-        return $args;
+            $forum_ids = utehub2026_get_forum_descendant_ids( (int) $tab['forum'] );
+            if ( ! empty( $forum_ids ) ) {
+                $args['post_parent__in'] = $forum_ids;
+            }
+            break;
+        }
     }
 
-    foreach ( utehub2026_get_recent_topics_tabs() as $tab ) {
-        if ( empty( $tab['forum'] ) || $tab_key !== $tab['key'] ) {
-            continue;
-        }
+    $promoted_groups      = utehub2026_get_recent_topics_promoted_groups( $args );
+    $promoted_ids         = $promoted_groups['ordered'];
+    $promoted_count       = count( $promoted_ids );
+    $regular_posts_limit  = 1 === $paged ? max( 0, $posts_per_page - $promoted_count ) : $posts_per_page;
 
-        $forum_ids = utehub2026_get_forum_descendant_ids( (int) $tab['forum'] );
-        if ( ! empty( $forum_ids ) ) {
-            $args['post_parent__in'] = $forum_ids;
-        }
-        break;
+    if ( ! empty( $promoted_ids ) ) {
+        $args['post__not_in'] = isset( $args['post__not_in'] )
+            ? array_values( array_unique( array_merge( (array) $args['post__not_in'], $promoted_ids ) ) )
+            : $promoted_ids;
+        $args['offset']       = max( 0, ( ( $paged - 1 ) * $posts_per_page ) - $promoted_count );
+        $args['paged']        = 1;
     }
+
+    if ( 1 === $paged && $regular_posts_limit > 0 ) {
+        $args['posts_per_page'] = $regular_posts_limit;
+    }
+
+    $args['utehub2026_promoted_topic_ids']    = $promoted_ids;
+    $args['utehub2026_promoted_topic_count']  = $promoted_count;
+    $args['utehub2026_regular_posts_limit']   = $regular_posts_limit;
+    $args['utehub2026_base_posts_per_page']   = $posts_per_page;
 
     return $args;
 }
@@ -1961,9 +2053,27 @@ function utehub2026_render_topics_feed( $base_url = '' ) {
     $tabs            = utehub2026_get_recent_topics_tabs( $base_url );
     $search          = isset( $_GET['bbp_search'] ) ? sanitize_text_field( wp_unslash( $_GET['bbp_search'] ) ) : '';
     $current_forum   = utehub2026_get_current_recent_topics_tab();
-    $topic_query     = new WP_Query( utehub2026_get_recent_topics_query_args( $paged ) );
+    $query_args      = utehub2026_get_recent_topics_query_args( $paged );
+    $topic_query     = new WP_Query( $query_args );
     $count_text      = '';
     $pagination_links = '';
+
+    if ( ! empty( $query_args['utehub2026_promoted_topic_ids'] ) ) {
+        $promoted_posts = utehub2026_get_recent_topics_promoted_posts( $query_args );
+        $promoted_count = count( $promoted_posts );
+
+        if ( $promoted_count ) {
+            if ( 1 === $paged ) {
+                $regular_posts = array_slice( $topic_query->posts, 0, max( 0, (int) $query_args['utehub2026_regular_posts_limit'] ) );
+                $topic_query->posts = array_merge( $promoted_posts, $regular_posts );
+                $topic_query->post_count = count( $topic_query->posts );
+            }
+
+            $topic_query->found_posts   += $promoted_count;
+            $posts_per_page              = max( 1, (int) $query_args['utehub2026_base_posts_per_page'] );
+            $topic_query->max_num_pages  = (int) ceil( $topic_query->found_posts / $posts_per_page );
+        }
+    }
 
     if ( $topic_query->have_posts() ) {
         $from = ( ( $paged - 1 ) * (int) $topic_query->query_vars['posts_per_page'] ) + 1;
